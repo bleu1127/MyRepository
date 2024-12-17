@@ -36,7 +36,10 @@ include('includes/navbar.php');
                         </thead>
                         <tbody>
                             <?php
-                            $query = "SELECT * FROM student_assistant WHERE status!='2'";
+                            $query = "SELECT sa.*, a.date, a.day, a.time_in, a.time_out, a.status as attendance_status 
+                                      FROM student_assistant sa 
+                                      LEFT JOIN attendance a ON sa.id = a.user_id 
+                                      WHERE sa.status!='2'";
                             $query_run = mysqli_query($con, $query);
                             if (mysqli_num_rows($query_run) > 0) {
                                 foreach ($query_run as $row) {
@@ -48,18 +51,18 @@ include('includes/navbar.php');
                                         <td><?= $row['program']; ?></td>
                                         <td><?= $row['year']; ?></td>
                                         <td><?= $row['work']; ?></td>
-                                        <!-- <td><?= $row['date']; ?></td>";
-                                        <td> <?= $row['day']; ?></td>";
-                                        <td><?= $row['time_in']; ?></td>";
-                                        <td> <?= $row['time_out']; ?></td>";
-                                        <td><?= $row['status']; ?></td>"; -->
+                                        <td><?= $row['date'] ? date('Y-m-d', strtotime($row['date'])) : '-'; ?></td>
+                                        <td><?= $row['day'] ?? '-'; ?></td>
+                                        <td><?= $row['time_in'] ? date('H:i:s', strtotime($row['time_in'])) : '-'; ?></td>
+                                        <td><?= $row['time_out'] ? date('H:i:s', strtotime($row['time_out'])) : '-'; ?></td>
+                                        <td><?= $row['attendance_status'] ?? '-'; ?></td>
                                     </tr>
                                 <?php
                                 }
                             } else {
                                 ?>
                                 <tr>
-                                    <td colspan="10">No Record Found</td>
+                                    <td colspan="11">No Record Found</td>
                                 </tr>
                             <?php
                             }

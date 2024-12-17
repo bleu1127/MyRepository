@@ -1,3 +1,7 @@
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+
 <nav style="background-color: #F16E04;" class="sb-topnav navbar navbar-expand navbar-dark">
     <!-- Navbar Brand-->
     <a class="navbar-brand ps-3" href="index.php">WIT Student Assistant</a>
@@ -13,11 +17,13 @@
     <!-- Navbar-->
     <ul class="navbar-nav ms-auto ms-md-0 me-3 me-lg-4">
         <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle text-white" id="navbarDropdown" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Admin <i class="fas fa-user fa-fw"></i></a>
-            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+            <a class="nav-link dropdown-toggle text-white" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="fas fa-user fa-fw"></i> Admin
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                 <li>
                     <form action="../allcode.php" method="POST">
-                        <button href="login.php" type="submit" name="logout_btn" class="dropdown-item">Logout</button>
+                        <button type="submit" name="logout_btn" class="dropdown-item">Logout</button>
                     </form>
                 </li>
             </ul>

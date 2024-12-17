@@ -1,4 +1,5 @@
 <?php
+session_start();
 include('authentication.php');
 include('includes/header.php');
 ?>
@@ -17,41 +18,70 @@ include('includes/header.php');
                 </div>
                 <div class="card-body">
                     <form class="row g-3" action="add4.php" method="POST">
+                        <?php
+                        // Carry forward data from previous forms
+                        foreach($_POST as $key => $value) {
+                            if(is_array($value)) {
+                                foreach($value as $item) {
+                                    echo '<input type="hidden" name="'.$key.'[]" value="'.htmlspecialchars($item).'">';
+                                }
+                            } else {
+                                echo '<input type="hidden" name="'.$key.'" value="'.htmlspecialchars($value).'">';
+                            }
+                        }
+                        ?>
                         <h4>Reference</h4>
 
                         <center>
                             <h4>Outside WIT</h4>
                         </center>
 
-                        <div class="col-md-4">
-                            <label class="form-label">Name</label>
-                            <input  name="owit_name" class="form-control">
+                        <!-- First Outside WIT Reference -->
+                        <div class="row">
+                            <div class="col-md-4">
+                                <label class="form-label">Name</label>
+                                <input name="out_name1" class="form-control">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Company/Address</label>
+                                <input name="comp_add1" class="form-control">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Contact No.</label>
+                                <input name="cn1" class="form-control">
+                            </div>
                         </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Company/Address</label>
-                            <input  name="owit_add" class="form-control">
+
+                        <!-- Second Outside WIT Reference -->
+                        <div class="row mt-2">
+                            <div class="col-md-4">
+                                <label class="form-label">Name</label>
+                                <input name="out_name2" class="form-control">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Company/Address</label>
+                                <input name="comp_add2" class="form-control">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Contact No.</label>
+                                <input name="cn2" class="form-control">
+                            </div>
                         </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Contact No.</label>
-                            <input  type="owit_no" class="form-control" id="age">
-                        </div>
-                        <div class="col-md-4">
-                            <input name="owit_name" class="form-control">
-                        </div>
-                        <div class="col-md-4">
-                            <input name="owit_add" class="form-control">
-                        </div>
-                        <div class="col-md-4">
-                            <input type="owit_no" class="form-control">
-                        </div>
-                        <div class="col-md-4">
-                            <input name="owit_name" class="form-control">
-                        </div>
-                        <div class="col-md-4">
-                            <input name="owit_add" class="form-control">
-                        </div>
-                        <div class="col-md-4">
-                            <input type="owit_no" class="form-control">
+
+                        <!-- Third Outside WIT Reference -->
+                        <div class="row mt-2">
+                            <div class="col-md-4">
+                                <label class="form-label">Name</label>
+                                <input name="out_name3" class="form-control">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Company/Address</label>
+                                <input name="comp_add3" class="form-control">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Contact No.</label>
+                                <input name="cn3" class="form-control">
+                            </div>
                         </div>
 
                         <hr class="divider" />
@@ -60,35 +90,52 @@ include('includes/header.php');
                             <h4>From WIT</h4>
                         </center>
 
-                        <div class="col-md-4">
-                            <label class="form-label">Name</label>
-                            <input  name="fwit_name" class="form-control">
+                        <!-- First From WIT Reference -->
+                        <div class="row">
+                            <div class="col-md-4">
+                                <label class="form-label">Name</label>
+                                <input name="from_wit1" class="form-control">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Company/Address</label>
+                                <input name="comp_add4" class="form-control">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Contact No.</label>
+                                <input name="cn4" class="form-control">
+                            </div>
                         </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Company/Address</label>
-                            <input  name="fwit_add" class="form-control">
+
+                        <!-- Second From WIT Reference -->
+                        <div class="row mt-2">
+                            <div class="col-md-4">
+                                <label class="form-label">Name</label>
+                                <input name="from_wit2" class="form-control">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Company/Address</label>
+                                <input name="comp_add5" class="form-control">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Contact No.</label>
+                                <input name="cn5" class="form-control">
+                            </div>
                         </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Contact No.</label>
-                            <input  type="fwit_no" class="form-control" id="age">
-                        </div>
-                        <div class="col-md-4">
-                            <input name="fwit_name" class="form-control">
-                        </div>
-                        <div class="col-md-4">
-                            <input name="fwit_add" class="form-control">
-                        </div>
-                        <div class="col-md-4">
-                            <input type="fwit_no" class="form-control">
-                        </div>
-                        <div class="col-md-4">
-                            <input name="fwit_name" class="form-control">
-                        </div>
-                        <div class="col-md-4">
-                            <input name="fwit_add" class="form-control">
-                        </div>
-                        <div class="col-md-4">
-                            <input type="fwit_no" class="form-control">
+
+                        <!-- Third From WIT Reference -->
+                        <div class="row mt-2">
+                            <div class="col-md-4">
+                                <label class="form-label">Name</label>
+                                <input name="from_wit3" class="form-control">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Company/Address</label>
+                                <input name="comp_add6" class="form-control">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Contact No.</label>
+                                <input name="cn6" class="form-control">
+                            </div>
                         </div>
 
                         <hr class="divider" />
@@ -99,27 +146,27 @@ include('includes/header.php');
 
                         <div class="col-md-4">
                             <label class="form-label">Father's Name</label>
-                            <input  name="father_name" class="form-control">
+                            <input name="fathers_name" class="form-control">
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Occupation</label>
-                            <input  name="father_occ" class="form-control">
+                            <input name="fathers_occ" class="form-control">
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Approx. Income/Mon</label>
-                            <input  type="father_income" class="form-control" id="age">
+                            <input type="number" name="fathers_income" class="form-control">
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Mother's Name</label>
-                            <input  name="mother_name" class="form-control">
+                            <input name="mothers_name" class="form-control">
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Occupation</label>
-                            <input  name="mother_occ" class="form-control">
+                            <input name="mothers_occ" class="form-control">
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Approx. Income/Mon</label>
-                            <input  type="mother_income" class="form-control" id="age">
+                            <input type="number" name="mothers_income" class="form-control">
                         </div>
                         <div class="col-md-8">
                             <label class="form-label">Other Source of Income</label>
@@ -130,84 +177,63 @@ include('includes/header.php');
                             <input  name="other_in" class="form-control">
                         </div>
 
-                        <h5>Brothers & Sister</h5>
+                        <h5>Brothers & Sisters</h5>
+                        <div id="siblings-container">
+                            <!-- Template row for siblings -->
+                            <div class="siblings-row row mb-3">
+                                <div class="col-md-3">
+                                    <label class="form-label">Name</label>
+                                    <input type="text" name="sibling_name[]" class="form-control">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label">Age</label>
+                                    <input type="text" name="sibling_age[]" class="form-control">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Course/Yr./Grad./Sch</label>
+                                    <input type="text" name="sibling_level[]" class="form-control">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Work/Studying/No Work</label>
+                                    <input type="text" name="sibling_status[]" class="form-control">
+                                </div>
+                                <div class="col-md-1 d-flex align-items-end">
+                                    <button type="button" class="btn btn-danger btn-sm remove-sibling">✕</button>
+                                </div>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-secondary mt-2" onclick="addSiblingRow()">Add Sibling</button>
 
-                        <div class="col-md-3">
-                            <label class="form-label">Name</label>
-                            <input  name="bs_name" class="form-control">
-                        </div>
-                        <div class="col-md-2">
-                            <label class="form-label">Age</label>
-                            <input  name="bs_age" class="form-control">
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label">Course/Yr./Grad./Sch</label>
-                            <input  type="bs_lvl" class="form-control" id="age">
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Work/Studying/No Work</label>
-                            <input  name="bs_status" class="form-control">
-                        </div>
-                        <div class="col-md-3">
-                            <input  name="bs_name" class="form-control">
-                        </div>
-                        <div class="col-md-2">
-                            <input  name="bs_age" class="form-control">
-                        </div>
-                        <div class="col-md-3">
-                            <input  type="bs_lvl" class="form-control" id="age">
-                        </div>
-                        <div class="col-md-4">
-                            <input  name="bs_status" class="form-control">
-                        </div>
-                        <div class="col-md-3">
-                            <input  name="bs_name" class="form-control">
-                        </div>
-                        <div class="col-md-2">
-                            <input  name="bs_age" class="form-control">
-                        </div>
-                        <div class="col-md-3">
-                            <input  type="bs_lvl" class="form-control" id="age">
-                        </div>
-                        <div class="col-md-4">
-                            <input  name="bs_status" class="form-control">
-                        </div>
-                        <div class="col-md-3">
-                            <input  name="bs_name" class="form-control">
-                        </div>
-                        <div class="col-md-2">
-                            <input  name="bs_age" class="form-control">
-                        </div>
-                        <div class="col-md-3">
-                            <input  type="bs_lvl" class="form-control" id="age">
-                        </div>
-                        <div class="col-md-4">
-                            <input  name="bs_status" class="form-control">
-                        </div>
-                        <div class="col-md-3">
-                            <input  name="bs_name" class="form-control">
-                        </div>
-                        <div class="col-md-2">
-                            <input  name="bs_age" class="form-control">
-                        </div>
-                        <div class="col-md-3">
-                            <input  type="bs_lvl" class="form-control" id="age">
-                        </div>
-                        <div class="col-md-4">
-                            <input  name="bs_status" class="form-control">
-                        </div>
-                        <div class="col-md-3">
-                            <input  name="bs_name" class="form-control">
-                        </div>
-                        <div class="col-md-2">
-                            <input  name="bs_age" class="form-control">
-                        </div>
-                        <div class="col-md-3">
-                            <input  type="bs_lvl" class="form-control" id="age">
-                        </div>
-                        <div class="col-md-4">
-                            <input  name="bs_status" class="form-control">
-                        </div>
+                        <script>
+                        function addSiblingRow() {
+                            const container = document.getElementById('siblings-container');
+                            const template = container.querySelector('.siblings-row').cloneNode(true);
+                            
+                            // Clear input values
+                            template.querySelectorAll('input').forEach(input => {
+                                input.value = '';
+                            });
+                            
+                            // Update remove button
+                            template.querySelector('.remove-sibling').onclick = function() {
+                                if(container.children.length > 1) {
+                                    this.closest('.siblings-row').remove();
+                                }
+                            };
+                            
+                            container.appendChild(template);
+                        }
+
+                        // Add click handler to existing remove buttons
+                        document.querySelectorAll('.remove-sibling').forEach(button => {
+                            button.onclick = function() {
+                                const container = document.getElementById('siblings-container');
+                                if(container.children.length > 1) {
+                                    this.closest('.siblings-row').remove();
+                                }
+                            };
+                        });
+                        </script>
 
                         <?php
                         // Assuming the form data is submitted using POST
@@ -234,8 +260,65 @@ include('includes/header.php');
     </div>
 </div>
 
+<!-- Add this JavaScript before closing body tag -->
+<script>
+let counters = {
+    'outside-wit': 1,
+    'from-wit': 1,
+    'siblings': 1
+};
 
+function addRow(type) {
+    counters[type]++;
+    const container = document.getElementById(`${type}-container`);
+    const newRow = container.firstElementChild.cloneNode(true);
+    
+    // Update input names with new counter
+    const inputs = newRow.getElementsByTagName('input');
+    for(let input of inputs) {
+        let nameParts = input.name.match(/^([a-zA-Z_]+)(\d*)$/);
+        if(nameParts) {
+            input.name = nameParts[1] + counters[type];
+            input.value = ''; // Clear values
+        }
+    }
+    
+    // Add remove button
+    const removeBtn = document.createElement('button');
+    removeBtn.type = 'button';
+    removeBtn.className = 'btn btn-danger btn-sm mt-2';
+    removeBtn.innerHTML = 'Remove';
+    removeBtn.onclick = function() {
+        this.parentElement.remove();
+    };
+    newRow.appendChild(removeBtn);
+    
+    container.appendChild(newRow);
+}
 
+function addSiblingRow() {
+    const container = document.getElementById('siblings-container');
+    const newRow = container.firstElementChild.cloneNode(true);
+    
+    // Clear input values
+    const inputs = newRow.getElementsByTagName('input');
+    for(let input of inputs) {
+        input.value = '';
+    }
+    
+    // Add remove button
+    const removeBtn = document.createElement('button');
+    removeBtn.type = 'button';
+    removeBtn.className = 'btn btn-danger btn-sm mt-2';
+    removeBtn.innerHTML = 'Remove';
+    removeBtn.onclick = function() {
+        this.parentElement.remove();
+    };
+    newRow.appendChild(removeBtn);
+    
+    container.appendChild(newRow);
+}
+</script>
 
 <?php
 include('includes/footer.php');

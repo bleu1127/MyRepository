@@ -25,7 +25,7 @@ include('includes/header.php');
                                 <th>Program</th>
                                 <th>Year</th>
                                 <th>Work In</th>
-                                <th>Restore</th>
+                                <th>Action</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -44,24 +44,19 @@ include('includes/header.php');
                                         <td><?= $row['year']; ?></td>
                                         <td><?= $row['work']; ?></td>
                                         <td>
-                                            <button type="button" name="restore_btn" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#restoreModal" data-id="<?= $row['id']; ?>" data-name="<?= htmlspecialchars($row['last_name'] . ' ' . $row['first_name']); ?>">Restore</button>
+                                            <button type="button" class="btn btn-success restore_btn" data-bs-toggle="modal" data-bs-target="#restoreModal" data-id="<?= $row['id']; ?>" data-name="<?= htmlspecialchars($row['last_name'] . ' ' . $row['first_name']); ?>">Restore</button>
                                         </td>
-
-
-
-                                    <?php
-
+                                    </tr>
+                            <?php
                                 }
                             } else {
-
-                                    ?>
+                            ?>
                                     <tr>
-                                        <td colspan="6">No Record Found</td>
+                                        <td colspan="7">No Records Found</td>
                                     </tr>
-                                <?php
+                            <?php
                             }
-                                ?>
-
+                            ?>
                         </tbody>
                     </table>
                 </div>
@@ -105,6 +100,24 @@ document.addEventListener('DOMContentLoaded', function() {
         modalTitle.textContent = 'Confirm Restore';
         modalBody.textContent = 'Are you sure you want to restore ' + userName + '?';
         restoreUserId.value = userId;
+    });
+});
+
+// Initialize DataTables
+$(document).ready(function() {
+    $('#myTable').DataTable({
+        "dom": '<"top"f>rt<"bottom"lip><"clear">',
+        "responsive": true,
+        "pageLength": 10,
+        "ordering": true,
+        "info": true,
+        "lengthChange": true,
+        "searching": true,
+        "paging": true,
+        "language": {
+            "lengthMenu": "Show _MENU_ entries",
+            "info": "Showing _START_ to _END_ of _TOTAL_ entries"
+        }
     });
 });
 </script>

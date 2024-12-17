@@ -1,7 +1,10 @@
 <?php
-
+session_start();
 include('authentication.php');
 include('includes/header.php');
+
+// Start the registration session
+$_SESSION['registration_in_progress'] = true;
 
 ?>
 
@@ -29,27 +32,26 @@ include('includes/header.php');
 
                         <div class="col-md-4">
                             <label class="form-label">Image</label>
-                            <input type="file" name="image" class="form-control">
+                            <input type="file" name="profile_image" class="form-control" accept="image/jpeg,image/png,image/jpg">
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Last Name</label>
-                            <input name="last_name" class="form-control">
+                            <input name="last_name" required class="form-control">
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">First Name</label>
-                            <input name="first_name" class="form-control">
+                            <input name="first_name" required class="form-control">
                         </div>
                         <div class="col-md-3">
                             <label class="form-label">Age</label>
-                            <input name="age" class="form-control" id="age">
+                            <input name="age" required class="form-control" id="age">
                         </div>
                         <div class="col-md-3">
                             <label for="sex" class="form-label">Sex</label>
-                            <select id="sex" class="form-select">
-
-                                <option selected>Male</option>
-                                <option selected>Female</option>
-                                <option selected hidden>Choose...</option>
+                            <select name="sex" required class="form-select">
+                                <option value="">Choose...</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
                             </select>
                         </div>
                         <div class="col-md-3">

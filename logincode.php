@@ -30,7 +30,7 @@ if (isset($_POST['login_btn'])) {
             exit(0);
         } elseif ($_SESSION['auth_role'] == '0') {
             $_SESSION['messages'] = "You are logged in as a User";
-            header("Location: index.php");
+            header("Location: admin/user-tito.php");
             exit(0);
         }
     } else {

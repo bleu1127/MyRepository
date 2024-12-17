@@ -1,10 +1,8 @@
 <?php
+session_start();
 include('authentication.php');
 include('includes/header.php');
 ?>
-
-
-
 
 <head>
   <meta charset="utf-8" />
@@ -13,132 +11,219 @@ include('includes/header.php');
 </head>
 
 <body>
-  <div class="container-fluid px-0">
+  <form action="addcode.php" method="POST" enctype="multipart/form-data">
+    <!-- Add hidden fields to carry forward data from previous forms -->
+    <?php 
+    // Carry forward data from previous forms
+    $previous_data = array(
+        'last_name', 'first_name', 'age', 'sex', 'civil_status', 'date_of_birth',
+        'city_address', 'contact_no1', 'contact_no2', 'contact_no3', 
+        'province_address', 'guardian', 'honor_award', 'past_scholar',
+        'program', 'year', 'present_scholar', 'work_experience', 'special_talent',
+        'out_name1', 'comp_add1', 'cn1', 'out_name2', 'comp_add2', 'cn2',
+        'out_name3', 'comp_add3', 'cn3', 'from_wit1', 'comp_add4', 'cn4',
+        'from_wit2', 'comp_add5', 'cn5', 'from_wit3', 'comp_add6', 'cn6',
+        'fathers_name', 'fathers_occ', 'fathers_income', 'mothers_name', 
+        'mothers_occ', 'mothers_income', 'siblings'
+    );
 
+    foreach($previous_data as $field) {
+        if(isset($_POST[$field])) {
+            echo '<input type="hidden" name="'.$field.'" value="'.htmlspecialchars($_POST[$field]).'">';
+        }
+    }
 
-    <div class="row">
+    // Handle arrays like work_in
+    if(isset($_POST['work_in']) && is_array($_POST['work_in'])) {
+        foreach($_POST['work_in'] as $work) {
+            echo '<input type="hidden" name="work_in[]" value="'.htmlspecialchars($work).'">';
+        }
+    }
+    ?>
 
-      <div class="col-md-12">
-        <!-- <?php include('message.php'); ?> -->
-        <div class="card">
-          <div class="card-header">
-            <h4>Register Student Assistants
-              <a href="add3.php" class="btn btn-danger float-end">Back</a>
-            </h4>
-          </div>
-          <!-- <form action="addcode.php" method="POST" enctype="multipart/form-data"> -->
-          <!-- Hidden input to store base64 encoded fingerprint data -->
-          <input type="hidden" id="fingerprintData" name="fingerprintData">
-          
-          <div id="Container">
-            <nav class="navbar navbar-inverse">
-              <div class="container-fluid">
-                <div class="navbar-header">
-                  <div class="navbar-brand" href="#" style="color: white;">Register Finger Print</div>
+    <!-- Single hidden input for fingerprint data -->
+    <input type="hidden" id="fingerprintData" name="fingerprintData" value="">
+    
+    <div class="container-fluid px-0">
+      <div class="row">
+        <div class="col-md-12">
+          <?php
+          if(isset($_SESSION['message'])) {
+              ?>
+              <div class="alert alert-danger">
+                  <?= $_SESSION['message']; ?>
+              </div>
+              <?php
+              unset($_SESSION['message']);
+          }
+          ?>
+          <div class="card">
+            <div class="card-header">
+              <h4>Register Student Assistant Fingerprint
+                <a href="add3.php" class="btn btn-danger float-end">Back</a>
+              </h4>
+            </div>
+            
+            <div id="Container">
+              <div class="alert alert-info">
+                Please start capture and place your finger on the reader
+              </div>
+
+              <div id="content-capture">
+                <div id="status"></div>
+                <div id="imagediv">
+                  <div>Fingerprint preview will appear here</div>
                 </div>
-                <ul class="nav navbar-nav">
-                  <li id="Reader" class="active">
-                    <a href="#" style="color: white;" onclick="toggle_visibility(['content-reader','content-capture']);setActive('Reader','Capture')">Reader</a>
-                  </li>
-                </ul>
-                <ul class="nav navbar-nav">
-                  <li id="Capture" class="">
-                    <a href="#" style="color: white;" onclick="toggle_visibility(['content-capture','content-reader']);setActive('Capture','Reader')">Capture</a>
-                  </li>
-                </ul>
-              </div>
-            </nav>
-          
-            <div id="Scores">
-              <h5>Scan Quality : <input type="text" id="qualityInputBox" size="20" style="background-color:#DCDCDC;text-align:center;"></h5>
-            </div>
-
-            <div id="content-capture" style="display : none;">
-              <div id="status"></div>
-              <div id="imagediv"></div>
-              <div id="contentButtons">
-                <table width=70% align="center">
-                  <tr>
-                    <td>
-                      <input type="button" class="btn btn-primary" id="clearButton" value="Clear" onclick="Javascript:onClear()">
-                    </td>
-                    <td data-toggle="tooltip" title="Will work with the .png format.">
-                      <input type="button" class="btn btn-primary" name="save" id="save" value="Save">
-                    </td>
-                    <td>
-                      <input type="button" class="btn btn-primary" id="start" value="Start" onclick="Javascript:onStart()">
-                    </td>
-                    <td>
-                      <input type="button" class="btn btn-primary" id="stop" value="Stop" onclick="Javascript:onStop()">
-                    </td>
-                    <td>
-                    <td><button type="submit" name="add_btn" class="btn btn-primary">Register</button></td>
-                    </td>
-                </table>
-                
-              </div>
-
-              <div id="imageGallery"></div>
-              <div id="deviceInfo"></div>
-
-              <div id="saveAndFormats">
-                <form name="myForm" style="border : solid grey;padding:5px;">
-                  <b>Acquire Formats :</b><br>
-                  <table>
-                    <tr data-toggle="tooltip" title="Will save data to a .png file.">
-                      <td><input type="checkbox" name="PngImage" checked="true" value="4" onclick="checkOnly(this)"> PNG</td>
-                    </tr>
-                  </table>
-                </form>
-                <br>
-                <input type="button" class="btn btn-primary" id="saveImagePng" value="Export" onclick="Javascript:onImageDownload()">
-              </div>
-            </div>
-
-            <div id="content-reader">
-              <h4>Select Reader :</h4>
-              <select class="form-control" id="readersDropDown" onchange="selectChangeEvent()"></select>
-              <div id="readerDivButtons">
-                <table width=70% align="center">
-                  <tr>
-                    <td><input type="button" class="btn btn-primary" id="refreshList" value="Refresh List" onclick="Javascript:readersDropDownPopulate(false)"></td>
-                    <td><input type="button" class="btn btn-primary" id="capabilities" value="Capabilities" data-toggle="modal" data-target="#myModal" onclick="Javascript:populatePopUpModal()"></td>
-                  </tr>
-                </table>
-              </div>
-
-              <!-- Modal - Pop Up window content-->
-              <div class="modal fade" id="myModal" role="dialog">
-                <div class="modal-dialog">
-                  <div class="modal-content" id="modalContent">
-                    <div class="modal-header">
-                      <button type="button" class="close" data-dismiss="modal">&times;</button>
-                      <h4 class="modal-title">Reader Information</h4>
-                    </div>
-                    <div class="modal-body" id="ReaderInformationFromDropDown"></div>
-                    <div class="modal-footer">
-                      <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                    </div>
-                  </div>
+                <div id="contentButtons">
+                  <input type="button" class="btn btn-primary" id="start" value="Start Capture" onclick="onStart()">
+                  <input type="button" class="btn btn-secondary" id="stop" value="Stop" onclick="onStop()">
+                </div>
+                <div class="action-buttons">
+                  <button type="submit" name="add_btn" class="btn btn-success" 
+                          onclick="return validateForm()">Save Student Assistant</button>
                 </div>
               </div>
             </div>
+
           </div>
-          </form>
         </div>
       </div>
     </div>
-  </div>
-  <script src="lib/jquery.min.js"></script>
-  <script src="lib/bootstrap.min.js"></script>
-  <script src="scripts/es6-shim.js"></script>
-  <script src="scripts/websdk.client.bundle.min.js"></script>
-  <script src="scripts/fingerprint.sdk.min.js"></script>
-  <script src="app.js"></script>
+  </form>
+  
+<script src="lib/jquery.min.js"></script>
+<script src="lib/bootstrap.min.js"></script>
+<script src="scripts/es6-shim.js"></script>
+<script src="scripts/websdk.client.bundle.min.js"></script>
+<script src="scripts/fingerprint.sdk.min.js"></script>
+
+<script>
+let sdk = null;
+let currentFormat = null;
+
+async function initializeSDK() {  
+    try {
+        console.log("Initializing SDK...");
+        sdk = new Fingerprint.WebApi();
+        currentFormat = Fingerprint.SampleFormat.PngImage;
+        
+        // Enable buttons immediately
+        document.getElementById('start').disabled = false;
+        document.getElementById('stop').disabled = true;
+        
+        // Check device
+        const devices = await sdk.enumerateDevices();
+        console.log("Devices found:", devices);
+        
+        if (devices && devices.length > 0) {
+            showMessage("Device ready - Place finger when ready");
+            return true;
+        } else {
+            showMessage("No devices found!");
+            return false;
+        }
+      } catch (error) {
+        console.error("SDK Initialization failed:", error);
+        showMessage("Failed to initialize fingerprint reader");
+        return false;
+    }
+}
+
+// Direct button click handlers
+async function handleStartCapture() {
+    console.log("Start capture clicked");
+    try {
+        if (!sdk) {
+            console.log("Reinitializing SDK...");
+            await initializeSDK();
+        }
+        
+        document.getElementById('start').disabled = true;
+        document.getElementById('stop').disabled = false;
+        
+        await sdk.startAcquisition(currentFormat);
+        showMessage("Place your finger on the reader");
+    } catch (error) {
+        console.error("Start capture failed:", error);
+        showMessage("Failed to start capture: " + error.message);
+        document.getElementById('start').disabled = false;
+        document.getElementById('stop').disabled = true;
+    }
+}
+
+async function handleStopCapture() {
+    console.log("Stop capture clicked");
+    try {
+        await sdk.stopAcquisition();
+        document.getElementById('start').disabled = false;
+        document.getElementById('stop').disabled = true;
+        showMessage("Capture stopped");
+     } catch (error) {
+        console.error("Stop capture failed:", error);
+        showMessage("Failed to stop capture: " + error.message);
+      } 
+}
+
+// Replace onclick handlers in buttons with direct event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    console.log("DOM loaded, setting up event listeners");
+    
+    // Initialize SDK
+    initializeSDK();
+    
+    // Set up button listeners
+    const startButton = document.getElementById('start');
+    const stopButton = document.getElementById('stop');
+    
+    if (startButton) {
+        startButton.onclick = handleStartCapture;
+        console.log("Start button handler attached");
+    }
+    
+    if (stopButton) {
+        stopButton.onclick = handleStopCapture;
+        console.log("Stop button handler attached");
+    }
+    
+    // Set up SDK event handlers
+    if (sdk) {
+        sdk.onSamplesAcquired = function(s) {
+            console.log("Sample acquired:", s);
+            try {
+                const samples = JSON.parse(s.samples);
+                if (samples.length > 0) {
+                    const fingerprintData = Fingerprint.b64UrlTo64(samples[0]);
+                    document.getElementById('fingerprintData').value = fingerprintData;
+                    
+                    const vDiv = document.getElementById('imagediv');
+                    vDiv.innerHTML = '<img src="data:image/png;base64,' + fingerprintData + '" />';
+                    
+                    showMessage("Fingerprint captured successfully");
+                    handleStopCapture();
+                }
+            } catch (error) {
+                console.error("Sample processing error:", error);
+                showMessage("Error processing fingerprint");
+            }
+        };
+    }
+});
+
+function showMessage(message) {
+    const status = document.getElementById('status');
+    if (status) {
+        status.innerHTML = '<div class="alert alert-' + 
+            (message.toLowerCase().includes('error') ? 'danger' : 'info') + 
+            '">' + message + '</div>';
+        console.log("Status message:", message);
+    }
+}
+</script>
+
+<!-- Include app.js last -->
+<script src="app.js"></script>
+
 </body>
-
-
-
 
 <?php
 include('includes/footer.php');

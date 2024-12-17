@@ -9,8 +9,7 @@ include('includes/header.php');
         <li class="breadcrumb-item active">Time Log Report</li>
     </ol>
     <div class="row">
-
-    <div class="col-md-12">
+        <div class="col-md-12">
             <div class="card">
                 <div class="card-header">
                     <h4>Attendance</h4>
@@ -34,7 +33,21 @@ include('includes/header.php');
                         </thead>
                         <tbody>
                             <?php
-                            $query = "SELECT * FROM student_assistant WHERE status!='2'";
+                            $query = "SELECT sa.id, sa.last_name, sa.first_name, sa.program, sa.year, sa.work,
+                                     COALESCE(a.date, 'Not logged') as date,
+                                     COALESCE(a.day, 'Not logged') as day,
+                                     a.time_in,
+                                     a.time_out,
+                                     CASE 
+                                         WHEN a.time_in IS NULL AND a.time_out IS NULL THEN 'Not logged'
+                                         WHEN a.time_out IS NULL THEN 'Logged in'
+                                         ELSE 'Completed'
+                                     END as status
+                                     FROM student_assistant sa
+                                     LEFT JOIN attendance a ON sa.id = a.user_id
+                                     WHERE sa.status != '2'
+                                     ORDER BY sa.last_name, a.date DESC";
+                            
                             $query_run = mysqli_query($con, $query);
                             if (mysqli_num_rows($query_run) > 0) {
                                 foreach ($query_run as $row) {
@@ -46,18 +59,18 @@ include('includes/header.php');
                                         <td><?= $row['program']; ?></td>
                                         <td><?= $row['year']; ?></td>
                                         <td><?= $row['work']; ?></td>
-                                        <!-- <td><?= $row['date']; ?></td>";
-                                        <td> <?= $row['day']; ?></td>";
-                                        <td><?= $row['time_in']; ?></td>";
-                                        <td> <?= $row['time_out']; ?></td>";
-                                        <td><?= $row['status']; ?></td>"; -->
+                                        <td><?= $row['date']; ?></td>
+                                        <td><?= $row['day']; ?></td>
+                                        <td><?= $row['time_in'] ? date('h:i A', strtotime($row['time_in'])) : 'Not logged'; ?></td>
+                                        <td><?= $row['time_out'] ? date('h:i A', strtotime($row['time_out'])) : 'Not logged'; ?></td>
+                                        <td><?= $row['status']; ?></td>
                                     </tr>
                                 <?php
                                 }
                             } else {
                                 ?>
                                 <tr>
-                                    <td colspan="10">No Record Found</td>
+                                    <td colspan="11">No Record Found</td>
                                 </tr>
                             <?php
                             }
@@ -69,7 +82,6 @@ include('includes/header.php');
         </div>
     </div>
 </div>
-
 
 <?php
 include('includes/footer.php');
