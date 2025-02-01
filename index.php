@@ -16,7 +16,6 @@ if(empty($profileImage)) {
     $profileImage = 'images/defaultProfile.png';
 }
 
-// Update the attendance query to get the latest record with SA details
 $latestLog = null;
 $saDetails = null;
 $query = "SELECT a.*, sa.* 
@@ -407,10 +406,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function updateAttendanceDisplay(data) {
-        // Update attendance table
         const tbody = document.querySelector('.table-responsive tbody');
         if (tbody && data) {
-            // Get the image path, use default if not provided
             const imagePath = data.image || 'images/defaultProfile.png';
             
             const row = `
@@ -431,8 +428,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 </tr>`;
             tbody.innerHTML = row;
         }
-
-        // Update profile card
+    
         if (data) {
             document.querySelector('.card-title').textContent = data.name;
             if (data.program) document.querySelector('.fa-graduation-cap').parentNode.textContent = ' ' + data.program;
