@@ -4,9 +4,9 @@
 #include <WebServer.h>
 
 // WiFi credentials
-const char* ssid = "EBJ Bro";
-const char* password = "JEBE1129";
-const char* serverUrl = "http://192.168.254.211/sa_management_system/fingerprint.php";
+const char* ssid = "WiFi SSID";
+const char* password = "WIfi password";
+const char* serverUrl = "http://xx.xx.xx.xx/sa_management_system/fingerprint.php";
 
 // DY50 uses Hardware Serial2 (pins 16,17 on ESP32)
 Adafruit_Fingerprint finger = Adafruit_Fingerprint(&Serial2);
