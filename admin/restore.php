@@ -45,6 +45,7 @@ include('includes/header.php');
                                         <td><?= $row['work']; ?></td>
                                         <td>
                                             <button type="button" class="btn btn-success restore_btn" data-bs-toggle="modal" data-bs-target="#restoreModal" data-id="<?= $row['id']; ?>" data-name="<?= htmlspecialchars($row['last_name'] . ' ' . $row['first_name']); ?>">Restore</button>
+                                            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal" data-id="<?= $row['id']; ?>" data-name="<?= htmlspecialchars($row['last_name'] . ' ' . $row['first_name']); ?>">Delete Permanently</button>
                                         </td>
                                     </tr>
                             <?php
@@ -85,6 +86,28 @@ include('includes/header.php');
     </div>
 </div>
 
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Confirm Permanent Deletion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-danger fw-bold">Warning: This action cannot be undone!</p>
+                <p>Are you sure you want to permanently delete <span id="deleteStudentName" class="fw-bold"></span>?</p>
+            </div>
+            <div class="modal-footer">
+                <form action="code.php" method="POST" id="deleteForm">
+                    <input type="hidden" name="delete_permanent" id="deleteUserId">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger">Delete Permanently</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     let restoreModal = document.getElementById('restoreModal');
@@ -100,6 +123,19 @@ document.addEventListener('DOMContentLoaded', function() {
         modalTitle.textContent = 'Confirm Restore';
         modalBody.textContent = 'Are you sure you want to restore ' + userName + '?';
         restoreUserId.value = userId;
+    });
+
+    let deleteModal = document.getElementById('deleteModal');
+    deleteModal.addEventListener('show.bs.modal', function(event) {
+        let button = event.relatedTarget;
+        let userId = button.getAttribute('data-id');
+        let userName = button.getAttribute('data-name');
+        let modalBody = deleteModal.querySelector('.modal-body #deleteStudentName');
+        let deleteForm = document.getElementById('deleteForm');
+        let deleteUserId = document.getElementById('deleteUserId');
+        
+        modalBody.textContent = userName;
+        deleteUserId.value = userId;
     });
 });
 

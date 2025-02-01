@@ -1,398 +1,809 @@
-var sdk = new Fingerprint.WebApi();
-var currentFormat = Fingerprint.SampleFormat.Iso19794;
-var isCapturing = false;
-var MATCHING_THRESHOLD = 0.70;
-var state = document.getElementById('content-capture');
 var test = null;
-var myVal = ""; 
+
+var state = null; // Move this to be set after DOM loads
+
+var myVal = ""; // Drop down selected value of reader 
 var disabled = true;
 var startEnroll = false;
 
+var currentFormat = Fingerprint.SampleFormat.PngImage;
 var deviceTechn = {
-    0: "Unknown",
-    1: "Optical",
-    2: "Capacitive",
-    3: "Thermal",
-    4: "Pressure"
-}
+               0: "Unknown",
+               1: "Optical",
+               2: "Capacitive",
+               3: "Thermal",
+               4: "Pressure"
+            }
 
 var deviceModality = {
-    0: "Unknown",
-    1: "Swipe",
-    2: "Area",
-    3: "AreaMultifinger"
-}
+               0: "Unknown",
+               1: "Swipe",
+               2: "Area",
+               3: "AreaMultifinger"
+            }
 
 var deviceUidType = {
-    0: "Persistent",
-    1: "Volatile"
-}
-
-// Single showMessage implementation
-function showMessage(message) {
-    if (!message || message === "undefined") return;
-    
-    const status = document.getElementById('status') || state.querySelector("#status");
-    if (status) {
-        status.innerHTML = '<div class="alert alert-' + 
-            (message.toLowerCase().includes('error') ? 'danger' : 'info') + 
-            '">' + message + '</div>';
-        
-        // Auto-clear message after 5 seconds
-        setTimeout(() => status.innerHTML = "", 5000);
-    }
-    console.log('Status:', message);
-}
-
-// Show notification in profile card
-function showNotification(message, type = 'info') {
-  const notificationDiv = document.createElement('div');
-  notificationDiv.classList.add('notification', type);
-  notificationDiv.innerHTML = `
-    <div class="alert alert-${type} alert-dismissible fade show" role="alert">
-      ${message}
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-  `;
-
-  const profileImg = document.querySelector('.profile-img');
-  if(profileImg) {
-    profileImg.parentNode.insertBefore(notificationDiv, profileImg);
-  }
-
-  // Auto dismiss after 5 seconds
-  setTimeout(() => {
-    notificationDiv.remove();
-  }, 5000);
-}
-
-// Single implementation of fingerprint capture start
-function startFingerprintCapture(callback) {
-    if (isCapturing) {
-        showMessage('Capture already in progress');
-        return;
-    }
-    
-    sdk.startAcquisition(currentFormat).then(() => {
-        isCapturing = true;
-        showMessage('Place finger on reader');
-        if (callback) callback(null);
-    }).catch(error => {
-        showMessage('Failed to start capture: ' + error.message);
-        if (callback) callback(error);
-    });
-}
-
-// Single implementation of fingerprint capture stop
-function stopFingerprintCapture() {
-    if (!isCapturing) return;
-    
-    sdk.stopAcquisition().then(() => {
-        isCapturing = false;
-        showMessage('Capture stopped');
-    }).catch(error => {
-        showMessage('Failed to stop capture: ' + error.message);
-    });
-}
-
-// Main fingerprint processing logic
-sdk.onSamplesAcquired = async function(capture) {
-    if (!isCapturing) return;
-
-    try {
-        const samples = JSON.parse(capture.samples);
-        if (samples.length > 0) {
-            const fingerprintData = samples[0]; // ISO19794 format
-
-            console.log('Fingerprint data captured');
-
-            // Verify fingerprint and get SA ID if matched
-            const saId = await verifyFingerprint(fingerprintData);
-
-            if (saId) {
-                // Submit attendance if fingerprint matched
-                await submitAttendance(saId);
-            } else {
-                console.log('No SA ID returned from verifyFingerprint');
+               0: "Persistent",
+               1: "Volatile"
             }
-        }
-    } catch (error) {
-        console.error('Error processing fingerprint:', error);
-        showNotification('Error processing fingerprint', 'error');
-    } finally {
-        isCapturing = false;
-        sdk.stopAcquisition().catch(console.error);
-    }
-};
 
-// Helper functions
-async function verifyFingerprint(fingerprintData) {
-    try {
-        const cleanFingerprint = fingerprintData.trim();
-
-        // Debug log: fingerprint data being sent
-        console.log('Sending fingerprint data for verification, length:', cleanFingerprint.length);
-
-        const response = await fetch('tito_log.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                action: 'verify_fingerprint',
-                fingerprint: cleanFingerprint
-            })
-        });
-
-        const result = await response.json();
-        console.log('Verification result:', result);
-
-        if (result.matched && result.sa_id) {
-            const saId = parseInt(result.sa_id, 10);
-            console.log('Matched SA ID:', saId);
-
-            if (isNaN(saId) || saId <= 0) {
-                showNotification('Invalid SA ID received', 'error');
-                return null;
-            }
-            showNotification(`Fingerprint matched: ${result.sa_name}`, 'success');
-            return saId;
-        } else {
-            showNotification('No matching fingerprint found', 'error');
-            return null;
-        }
-
-    } catch (error) {
-        console.error('Verification error:', error);
-        showNotification('Error verifying fingerprint', 'error');
-        return null;
-    }
-}
-
-async function submitAttendance(saId) {
-    try {
-        if (!saId || saId <= 0) {
-            showNotification('Invalid SA ID', 'error');
-            return;
-        }
-
-        // Debug log: SA ID being sent for attendance recording
-        console.log('Submitting attendance for SA ID:', saId);
-
-        const response = await fetch('tito_log.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                sa_id: saId,
-                action: 'record_attendance'
-            })
-        });
-
-        const result = await response.json();
-        console.log('Attendance submission result:', result);
-
-        if (result.success) {
-            showNotification(result.message, 'success');
-        } else {
-            showNotification(result.message || 'Error recording attendance', 'error');
-        }
-
-    } catch (error) {
-        console.error('Error submitting attendance:', error);
-        showNotification('Error recording attendance', 'error');
-    }
-}
-
-function compareFingerprints(template1, template2) {
-    return template1 === template2;
-}
-
-function updateFingerprintDisplay(fingerprintData) {
-    const canvas = document.getElementById('fingerprint-canvas');
-    if (canvas) {
-        const ctx = canvas.getContext('2d');
-        const img = new Image();
-        img.onload = function() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        };
-        img.src = 'data:image/png;base64,' + fingerprintData;
-    }
-}
-
-// Fingerprint SDK Test Class
 var FingerprintSdkTest = (function () {
     function FingerprintSdkTest() {
         var _instance = this;
         this.operationToRestart = null;
         this.acquisitionStarted = false;
-        this.sdk = new Fingerprint.WebApi();
-        this.lastConnectionState = false;
-
-        // Add connection recovery handler
-        this.sdk.onCommunicationFailed = function (e) {
-            if (_instance.lastConnectionState) {
-                setTimeout(function() {
-                    _instance.sdk.startAcquisition(currentFormat, myVal).then(function() {
-                        _instance.lastConnectionState = true;
-                        showMessage("Connection recovered");
-                    }).catch(function(err) {
-                        showMessage("Communication failed: " + err.message);
-                    });
-                }, 1000);
-            }
-        };
-
+        this.sdk = new Fingerprint.WebApi;
         this.sdk.onDeviceConnected = function (e) {
-            _instance.lastConnectionState = true;
-            showMessage("Device connected: " + e.deviceInfo.DeviceID);
+            // Enable the start button when device is connected
+            $('#start').prop('disabled', false);
+            $('#stop').prop('disabled', true);
+            showMessage("Scanner connected. Click Start Capture to begin.");
         };
-
         this.sdk.onDeviceDisconnected = function (e) {
-            _instance.lastConnectionState = false;
-            showMessage("Device disconnected: " + e.deviceInfo.DeviceID);
+            // Disable buttons when device is disconnected
+            $('#start').prop('disabled', true);
+            $('#stop').prop('disabled', true);
+            showMessage("Scanner disconnected");
         };
-
+        this.sdk.onCommunicationFailed = function (e) {
+            showMessage("Communication Failed: " + e.message);
+        };
         this.sdk.onSamplesAcquired = function (s) {
-            sampleAcquired(s);
+            // Sample acquired event triggers this function
+                sampleAcquired(s);
         };
         this.sdk.onQualityReported = function (e) {
-            document.getElementById("qualityInputBox").value = Fingerprint.QualityCode[(e.quality)];
-        };
+            // Quality of sample aquired - Function triggered on every sample acquired
+                document.getElementById("qualityInputBox").value = Fingerprint.QualityCode[(e.quality)];
+        }
+
     }
 
     FingerprintSdkTest.prototype.startCapture = function () {
-        if (this.acquisitionStarted) {
+        if (this.acquisitionStarted) return;
+    
+        var _instance = this;
+        showMessage("Starting capture...");
+        
+        // Ensure we have a valid device
+        if (!myVal) {
+            showMessage("No scanner selected");
             return;
         }
-
-        var _instance = this;
-        this.operationToRestart = this.startCapture;
-        this.acquisitionStarted = true;
-
+    
+        // Set capture parameters
+        currentFormat = Fingerprint.SampleFormat.Intermediate;
+        
         this.sdk.startAcquisition(currentFormat, myVal).then(function () {
-            _instance.lastConnectionState = true;
-            showMessage("Place your finger on the reader.");
+            _instance.acquisitionStarted = true;
+            showMessage("Place your finger on the scanner");
+            $('#start').prop('disabled', true);
+            $('#stop').prop('disabled', false);
         }, function (error) {
-            _instance.acquisitionStarted = false;
-            _instance.lastConnectionState = false;
-            showMessage("Failed to start capture: " + error.message);
+            showMessage("Error starting capture: " + error.message);
+            console.error(error);
         });
     };
-
     FingerprintSdkTest.prototype.stopCapture = function () {
-        if (!this.acquisitionStarted) return;
+        if (!this.acquisitionStarted) //Monitor if already stopped capturing
+            return;
         var _instance = this;
         showMessage("");
         this.sdk.stopAcquisition().then(function () {
             _instance.acquisitionStarted = false;
+
+            //Disabling stop once stoped
             disableEnableStartStop();
+
         }, function (error) {
             showMessage(error.message);
         });
     };
 
     FingerprintSdkTest.prototype.getInfo = function () {
+        var _instance = this;
         return this.sdk.enumerateDevices();
     };
 
     FingerprintSdkTest.prototype.getDeviceInfoWithID = function (uid) {
-        return this.sdk.getDeviceInfo(uid);
+        var _instance = this;
+        return  this.sdk.getDeviceInfo(uid);
     };
 
+    
     return FingerprintSdkTest;
 })();
 
-// Initialize when page loads
-document.addEventListener('DOMContentLoaded', () => {
-    test = new FingerprintSdkTest();
-    
-    sdk.enumerateDevices()
-        .then(devices => {
-            if (devices.length === 0) {
-                showMessage("No fingerprint devices found");
-            } else {
-                showMessage("Fingerprint device ready");
-                // Auto-select first device if available
-                if (devices[0]) startFingerprintCapture();
-            }
-        })
-        .catch(error => {
-            showMessage("Error initializing SDK: " + error.message);
-        });
+function showMessage(message){
+    var statusElement = document.getElementById('status');
+    if (statusElement) {
+        statusElement.innerHTML = message;
+    }
+}
 
-    // Initialize reader selection with slight delay to ensure device is ready
-    setTimeout(function() {
-        readersDropDownPopulate(true);
-        
-        // Auto-select first reader if available
-        setTimeout(function() {
-            var reader = document.getElementById('readersDropDown');
-            if (reader && reader.options.length > 1) {
-                reader.selectedIndex = 1;
-                selectChangeEvent();
-                
-                // Force switch to capture tab after reader is selected
-                toggle_visibility(['content-capture','content-reader']);
-                setActive('Capture','Reader');
-            }
-        }, 500);
-    }, 1000);
-});
-
-// Window onload initialization
+// Update window.onload function
 window.onload = function () {
-    localStorage.clear();
-    test = new FingerprintSdkTest();
-    
-    // Force PNG format selection at startup
-    currentFormat = Fingerprint.SampleFormat.PngImage;
-    
-    // Initialize reader and UI
-    readersDropDownPopulate(true);
-    disableEnable();
-    enableDisableScanQualityDiv("content-reader");
-    disableEnableExport(true);
-
-    // Auto-check PNG format
-    if(document.querySelector('input[name="PngImage"]')) {
-        document.querySelector('input[name="PngImage"]').checked = true;
+    try {
+        state = document.getElementById('imagediv').parentElement; // Set state to parent container
+        localStorage.clear();
+        test = new FingerprintSdkTest();
+        
+        // Initialize scanner
+        test.sdk.enumerateDevices().then(function(device_list) {
+            if(device_list && device_list.length > 0) {
+                myVal = device_list[0]; // Use first available device
+                currentFormat = Fingerprint.SampleFormat.PngImage;
+                $('#start').prop('disabled', false);
+                showMessage("Scanner ready. Click Start Capture to begin.");
+            } else {
+                showMessage("No scanner detected");
+            }
+        }).catch(function(error) {
+            showMessage("Error initializing scanner: " + error.message);
+            console.error(error);
+        });
+        
+    } catch(error) {
+        showMessage("Failed to initialize scanner: " + error.message);
+        console.error(error);
     }
 };
 
-// Function to handle sample acquisition
-function sampleAcquired(s){   
-    try {
-        console.log("Sample acquired:", s);
-        if(currentFormat == Fingerprint.SampleFormat.PngImage){   
-            localStorage.setItem("imageSrc", "");                
-            var samples = JSON.parse(s.samples);            
-            localStorage.setItem("imageSrc", "data:image/png;base64," + Fingerprint.b64UrlTo64(samples[0]));
-            
-            var vDiv = document.getElementById('imagediv');
-            vDiv.innerHTML = "";
-            var image = new Image();
-            image.id = "image";
-            image.src = localStorage.getItem("imageSrc");
-            image.onload = function() {
-                var canvas = document.getElementById('fingerprint-canvas');
-                var ctx = canvas.getContext('2d');
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                // Draw the image scaled to canvas dimensions
-                ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
-            };
-            vDiv.appendChild(image);
-            
-            showMessage("Fingerprint captured successfully");
-            
-            // Additional debugging log
-            console.log("Fingerprint image stored.");
-            disableEnableExport(false);
+// Add new function to handle scanner initialization
+function initScannerAndUI() {
+    test.getInfo().then(function(successObj) {
+        if(successObj && successObj.length > 0) {
+            // Enable start button if scanner is connected
+            $('#start').prop('disabled', false);
+            $('#stop').prop('disabled', true);
+            showMessage("Scanner ready. Click Start Capture to begin.");
+            // Automatically select the first available scanner
+            myVal = successObj[0];
+        } else {
+            $('#start').prop('disabled', true);
+            $('#stop').prop('disabled', true);
+            showMessage("No scanner detected. Please connect a scanner.");
         }
-    } catch(err) {
-        showMessage("Error capturing fingerprint: " + err.message);
-        console.error("Error in sampleAcquired:", err);
+    }, function(error) {
+        showMessage(error.message);
+        $('#start').prop('disabled', true);
+        $('#stop').prop('disabled', true);
+    });
+}
+
+function onStart() {
+    if(!test || !test.sdk) {
+        showMessage("Scanner not initialized");
+        return;
+    }
+    
+    try {
+        currentFormat = Fingerprint.SampleFormat.PngImage;
+        test.startCapture();
+    } catch(error) {
+        showMessage("Error: " + error.message);
+        console.error(error);
     }
 }
+
+function onStop() {
+    test.stopCapture();
+    $('#start').prop('disabled', false);
+    $('#stop').prop('disabled', true);
+    showMessage("Capture stopped");
+}
+
+function onGetInfo() {
+    var allReaders = test.getInfo();    
+    allReaders.then(function (sucessObj) {
+        populateReaders(sucessObj);
+    }, function (error){
+        showMessage(error.message);
+    });
+}
+function onDeviceInfo(id, element){
+    var myDeviceVal = test.getDeviceInfoWithID(id);
+    myDeviceVal.then(function (sucessObj) {
+            console.log('sucessObj', sucessObj);
+            var deviceId = sucessObj.DeviceID;
+            var uidTyp = deviceUidType[sucessObj.eUidType];
+            var modality = deviceModality[sucessObj.eDeviceModality];
+            var deviceTech = deviceTechn[sucessObj.eDeviceTech];
+            //Another method to get Device technology directly from SDK
+            //Uncomment the below logging messages to see it working, Similarly for DeviceUidType and DeviceModality
+            //console.log(Fingerprint.DeviceTechnology[sucessObj.eDeviceTech]);            
+            //console.log(Fingerprint.DeviceModality[sucessObj.eDeviceModality]);
+            //console.log(Fingerprint.DeviceUidType[sucessObj.eUidType]);
+            var retutnVal = //"Device Info -"
+                 "Id : " +  deviceId
+                +"<br> Uid Type : "+ uidTyp
+                +"<br> Device Tech : " +  deviceTech
+                +"<br> Device Modality : " +  modality;
+
+            document.getElementById(element).innerHTML = retutnVal;
+
+        }, function (error){
+            showMessage(error.message);
+        });
+
+}
+function onClear() {
+         var vDiv = document.getElementById('imagediv');
+         vDiv.innerHTML = "";
+         localStorage.setItem("imageSrc", "");
+         localStorage.setItem("wsq", "");
+         localStorage.setItem("raw", "");
+         localStorage.setItem("intermediate", "");
+
+         disableEnableExport(true);
+}
+
+function toggle_visibility(ids) {
+    document.getElementById("qualityInputBox").value = "";
+    onStop();
+    enableDisableScanQualityDiv(ids[0]); // To enable disable scan quality div
+    for (var i=0;i<ids.length;i++) {        
+       var e = document.getElementById(ids[i]);
+        if(i == 0){
+            e.style.display = 'block';
+            state = e;
+            disableEnable();
+        }
+       else{
+            e.style.display = 'none';
+       }
+   }
+}
+
+
+$("#save").on("click",function(){
+    if(localStorage.getItem("imageSrc") == "" || localStorage.getItem("imageSrc") == null || document.getElementById('imagediv').innerHTML == ""){
+        alert("Error -> Fingerprint not available");
+    }else{
+        // Store fingerprint data in hidden field
+        document.getElementById('fingerprintData').value = localStorage.getItem("imageSrc").split(',')[1];
+        
+        var vDiv = document.getElementById('imageGallery');
+        if(vDiv.children.length < 5){
+            var image = document.createElement("img");
+            image.id = "galleryImage";
+            image.className = "img-thumbnail";
+            image.src = localStorage.getItem("imageSrc");
+            vDiv.appendChild(image);
+
+            localStorage.setItem("imageSrc"+vDiv.children.length,localStorage.getItem("imageSrc"));
+        }else{
+            document.getElementById('imageGallery').innerHTML = "";
+            $("#save").click();
+        }
+    }
+});
+
+function populateReaders(readersArray) {
+        var _deviceInfoTable = document.getElementById("deviceInfo");
+        _deviceInfoTable.innerHTML = "";
+        if(readersArray.length != 0){
+            _deviceInfoTable.innerHTML += "<h4>Available Readers</h4>"
+            for (i=0;i<readersArray.length;i++){ 
+                _deviceInfoTable.innerHTML += 
+                "<div id='dynamicInfoDivs' align='left'>"+
+                    "<div data-toggle='collapse' data-target='#"+readersArray[i]+"'>"+
+                        "<img src='images/info.png' alt='Info' height='20' width='20'> &nbsp; &nbsp;"+readersArray[i]+"</div>"+
+                        "<p class='collapse' id="+'"' + readersArray[i] + '"'+">"+onDeviceInfo(readersArray[i],readersArray[i])+"</p>"+
+                    "</div>";
+            }
+        }
+    };
+
+function sampleAcquired(s){   
+    try {
+        const samples = JSON.parse(s.samples);
+        if (!samples || samples.length === 0) return;
+
+        // Always capture intermediate template 
+        currentFormat = Fingerprint.SampleFormat.Intermediate;
+        const templateData = Fingerprint.b64UrlTo64(samples[0].Data);
+        document.getElementById('fingerprintData').value = templateData;
+
+        // Show fingerprint icon 
+        const imagediv = document.getElementById('imagediv');
+        imagediv.innerHTML = '<i class="fas fa-fingerprint" style="font-size: 100px; color: #007bff;"></i>';
+
+        // Automatically submit for matching
+        submitFingerprint(templateData);
+    } catch(error) {
+        console.error('Sample processing error:', error);
+        showMessage('Error processing fingerprint: ' + error.message);
+    }
+}
+
+function submitFingerprint(fingerprintData) {
+    $.ajax({
+        url: 'tito_log.php',
+        method: 'POST',
+        data: {
+            action: 'match_fingerprint',
+            fingerprintData: fingerprintData
+        },
+        success: function(response) {
+            try {
+                const result = JSON.parse(response);
+                if(result.success) {
+                    // Stop capture after successful match
+                    test.stopCapture();
+                    
+                    Swal.fire({
+                        title: 'Match Found!',
+                        text: `${result.sa.first_name} ${result.sa.last_name} - ${result.message}`,
+                        icon: 'success',
+                        timer: 2000,
+                        showConfirmButton: false
+                    }).then(() => {
+                        // Reload page to refresh attendance data
+                        location.reload();
+                    });
+                } else {
+                    showMessage("No matching fingerprint found");
+                    // Re-enable start button for another try
+                    $('#start').prop('disabled', false);
+                }
+            } catch(e) {
+                console.error('Parse error:', e);
+                showMessage('Error processing response');
+            }
+        },
+        error: function() {
+            showMessage('Failed to process fingerprint match');
+            $('#start').prop('disabled', false);
+        }
+    });
+}
+
+function updatePreview(imageData) {
+    const img = new Image();
+    img.onload = function() {
+        const canvas = document.getElementById('fingerprint-canvas');
+        if (canvas) {
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        }
+    };
+    img.src = imageData;
+}
+
+function matchWithDatabase(templateData) {
+    $.ajax({
+        url: 'tito_log.php',
+        method: 'POST',
+        data: {
+            action: 'match_fingerprint',
+            fingerprintData: templateData
+        },
+        success: function(response) {
+            try {
+                const result = JSON.parse(response);
+                if(result.success) {
+                    // Stop capture after successful match
+                    test.stopCapture();
+                    
+                    Swal.fire({
+                        title: 'Match Found!',
+                        text: `${result.sa.first_name} ${result.sa.last_name} - ${result.message}`,
+                        icon: 'success',
+                        timer: 2000,
+                        showConfirmButton: false
+                    }).then(() => {
+                        // Reload page to refresh attendance data
+                        location.reload();
+                    });
+                } else {
+                    showMessage("No matching fingerprint found");
+                    // Re-enable capture for another try
+                    $('#start').prop('disabled', false);
+                }
+            } catch(e) {
+                console.error('Parse error:', e);
+                showMessage('Error processing response');
+            }
+        },
+        error: function() {
+            showMessage('Failed to process fingerprint match');
+        }
+    });
+}
+
+// Add fingerprint matching functions
+function matchFingerprint(template1, template2) {
+    try {
+        // Convert templates to proper format if needed
+        const t1 = base64ToArrayBuffer(template1);
+        const t2 = base64ToArrayBuffer(template2);
+        
+        // Use WebSDK matching function
+        return Fingerprint.compareTemplates(t1, t2);
+    } catch(error) {
+        console.error('Matching error:', error);
+        return 0;
+    }
+}
+
+function base64ToArrayBuffer(base64) {
+    const binaryString = window.atob(base64);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+    }
+    return bytes.buffer;
+}
+
+// Add new function to capture intermediate template
+function captureIntermediateTemplate() {
+    currentFormat = Fingerprint.SampleFormat.Intermediate;
+    test.sdk.startAcquisition(currentFormat, myVal).then(function() {
+        console.log("Started intermediate template capture");
+    }, function(error) {
+        console.error("Failed to start intermediate capture:", error);
+        showMessage("Error capturing template: " + error.message);
+    });
+}
+
+function readersDropDownPopulate(checkForRedirecting){ // Check for redirecting is a boolean value which monitors to redirect to content tab or not
+    myVal = "";
+    var allReaders = test.getInfo();
+    allReaders.then(function (sucessObj) {        
+        var readersDropDownElement = document.getElementById("readersDropDown");
+        readersDropDownElement.innerHTML ="";
+        //First ELement
+        var option = document.createElement("option");
+        option.selected = "selected";
+        option.value = "";
+        option.text = "Select Reader";
+        readersDropDownElement.add(option);
+        for (i=0;i<sucessObj.length;i++){ 
+            var option = document.createElement("option");
+            option.value = sucessObj[i];
+            option.text = 'Digital Persona (' + sucessObj[i] + ')';
+            readersDropDownElement.add(option);
+        }
+
+    //Check if readers are available get count and  provide user information if no reader available, 
+    //if only one reader available then select the reader by default and sennd user to capture tab
+    checkReaderCount(sucessObj,checkForRedirecting);
+
+    }, function (error){
+        showMessage(error.message);
+    });
+}
+
+function checkReaderCount(sucessObj,checkForRedirecting){
+   if(sucessObj.length == 0){
+    alert("No reader detected. Please connect a reader.");
+   }else if(sucessObj.length == 1){
+        document.getElementById("readersDropDown").selectedIndex = "1";
+        if(checkForRedirecting){
+            toggle_visibility(['content-capture','content-reader']);    
+            enableDisableScanQualityDiv("content-capture"); // To enable disable scan quality div
+            setActive('Capture','Reader'); // Set active state to capture
+        }
+   }
+
+    selectChangeEvent(); // To make the reader selected
+}
+
+function selectChangeEvent(){
+    var readersDropDownElement = document.getElementById("readersDropDown");
+    myVal = readersDropDownElement.options[readersDropDownElement.selectedIndex].value;
+    disableEnable();
+    onClear();
+    document.getElementById('imageGallery').innerHTML = "";
+
+    //Make capabilities button disable if no user selected
+    if(myVal == ""){
+        $('#capabilities').prop('disabled', true);
+    }else{
+        $('#capabilities').prop('disabled', false);
+    }
+}
+
+function populatePopUpModal(){
+    var modelWindowElement = document.getElementById("ReaderInformationFromDropDown");
+    modelWindowElement.innerHTML = "";
+    if(myVal != ""){
+        onDeviceInfo(myVal,"ReaderInformationFromDropDown");
+    }else{
+        modelWindowElement.innerHTML = "Please select a reader";
+    }
+}
+
+//Enable disable buttons
+function disableEnable(){
+
+    if(myVal != ""){
+        disabled = false;
+        $('#start').prop('disabled', false);
+        $('#stop').prop('disabled', false);
+        showMessage("");
+        disableEnableStartStop();
+    }else{
+        disabled = true;
+        $('#start').prop('disabled', true);
+        $('#stop').prop('disabled', true);
+        showMessage("Please select a reader");
+        onStop();
+    }
+}
+
+
+// Start-- Optional to make GUi user frindly 
+//To make Start and stop buttons selection mutually exclusive
+$('body').click(function(){disableEnableStartStop();});
+
+function disableEnableStartStop(){
+     if(!myVal == ""){
+        if(test.acquisitionStarted){
+            $('#start').prop('disabled', true);
+            $('#stop').prop('disabled', false);
+        }else{
+            $('#start').prop('disabled', false);
+            $('#stop').prop('disabled', true); 
+        }
+    }
+}
+
+// Stop-- Optional to make GUI user freindly
+
+
+function enableDisableScanQualityDiv(id){
+    if(id == "content-reader"){
+        document.getElementById('Scores').style.display = 'none';
+    }else{
+        document.getElementById('Scores').style.display = 'block';
+    }
+}
+
+
+function setActive(element1,element2){
+    document.getElementById(element2).className = "";
+
+    // And make this active
+   document.getElementById(element1).className = "active";
+
+}
+
+
+
+// For Download and formats starts
+
+function onImageDownload(){
+    if(currentFormat == Fingerprint.SampleFormat.PngImage){
+        if(localStorage.getItem("imageSrc") == "" || localStorage.getItem("imageSrc") == null || document.getElementById('imagediv').innerHTML == "" ){
+           alert("No image to download");
+        }else{
+            //alert(localStorage.getItem("imageSrc"));
+            downloadURI(localStorage.getItem("imageSrc"), "sampleImage.png", "image/png");
+        }
+    }
+
+    else if(currentFormat == Fingerprint.SampleFormat.Compressed){
+         if(localStorage.getItem("wsq") == "" || localStorage.getItem("wsq") == null || document.getElementById('imagediv').innerHTML == "" ){
+           alert("WSQ data not available.");
+        }else{
+            downloadURI(localStorage.getItem("wsq"), "compressed.wsq","application/octet-stream");
+        }
+    }
+
+    else if(currentFormat == Fingerprint.SampleFormat.Raw){
+         if(localStorage.getItem("raw") == "" || localStorage.getItem("raw") == null || document.getElementById('imagediv').innerHTML == "" ){
+           alert("RAW data not available.");
+        }else{
+
+            downloadURI("data:application/octet-stream;base64,"+localStorage.getItem("raw"), "rawImage.raw", "application/octet-stream");
+        }
+    }
+
+    else if(currentFormat == Fingerprint.SampleFormat.Intermediate){
+         if(localStorage.getItem("intermediate") == "" || localStorage.getItem("intermediate") == null || document.getElementById('imagediv').innerHTML == "" ){
+           alert("Intermediate data not available.");
+        }else{
+
+            downloadURI("data:application/octet-stream;base64,"+localStorage.getItem("intermediate"), "FeatureSet.bin", "application/octet-stream");
+        }
+    }
+
+    else{
+        alert("Nothing to download.");
+    }
+}
+
+
+function downloadURI(uri, name, dataURIType) {
+    if (IeVersionInfo() > 0){ 
+    //alert("This is IE " + IeVersionInfo());
+    var blob = dataURItoBlob(uri,dataURIType);
+    window.navigator.msSaveOrOpenBlob(blob, name);
+
+    }else {
+        //alert("This is not IE.");
+        var save = document.createElement('a');
+        save.href = uri;
+        save.download = name;
+        var event = document.createEvent("MouseEvents");
+            event.initMouseEvent(
+                    "click", true, false, window, 0, 0, 0, 0, 0
+                    , false, false, false, false, 0, null
+            );
+        save.dispatchEvent(event);
+    }
+}
+
+dataURItoBlob = function(dataURI, dataURIType) {
+    var binary = atob(dataURI.split(',')[1]);
+    var array = [];
+    for(var i = 0; i < binary.length; i++) {
+        array.push(binary.charCodeAt(i));
+    }
+    return new Blob([new Uint8Array(array)], {type: dataURIType});
+}
+
+
+function IeVersionInfo() {
+  var sAgent = window.navigator.userAgent;
+  var IEVersion = sAgent.indexOf("MSIE");
+
+  // If IE, return version number.
+  if (IEVersion > 0) 
+    return parseInt(sAgent.substring(IEVersion+ 5, sAgent.indexOf(".", IEVersion)));
+
+  // If IE 11 then look for Updated user agent string.
+  else if (!!navigator.userAgent.match(/Trident\/7\./)) 
+    return 11;
+
+  // Quick and dirty test for Microsoft Edge
+  else if (document.documentMode || /Edge/.test(navigator.userAgent))
+    return 12;
+
+  else
+    return 0; //If not IE return 0
+}
+
+
+$(document).ready(function(){
+  $('[data-toggle="tooltip"]').tooltip();   
+});
+
+function checkOnly(stayChecked)
+{
+    disableEnableExport(true);
+    onClear();
+    onStop();
+with(document.myForm)
+  {
+  for(i = 0; i < elements.length; i++)
+    {
+    if(elements[i].checked == true && elements[i].name != stayChecked.name)
+      {
+      elements[i].checked = false;
+      }
+    }
+    //Enable disable save button
+    for(i = 0; i < elements.length; i++)
+    {
+    if(elements[i].checked == true)
+      {
+        if(elements[i].name =="PngImage"){
+            disableEnableSaveThumbnails(false);
+        }else{
+            disableEnableSaveThumbnails(true);
+        }
+      }
+    }
+  }
+}         
+
+function assignFormat(){
+    currentFormat = "";
+    with(document.myForm){
+        for(i = 0; i < elements.length; i++){
+            if(elements[i].checked == true){
+                if(elements[i].name == "Raw"){
+                    currentFormat = Fingerprint.SampleFormat.Raw;
+                }
+                if(elements[i].name == "Intermediate"){
+                    currentFormat = Fingerprint.SampleFormat.Intermediate;
+                }
+                if(elements[i].name == "Compressed"){
+                    currentFormat = Fingerprint.SampleFormat.Compressed;
+                }
+                if(elements[i].name == "PngImage"){
+                    currentFormat = Fingerprint.SampleFormat.PngImage;
+                }
+                if(elements[i].name == "IsoTemplate"){
+                    currentFormat = Fingerprint.SampleFormat.ISO;
+                }
+                if(elements[i].name == "AnsiTemplate"){
+                    currentFormat = Fingerprint.SampleFormat.ANSI;
+                }
+            }
+        }
+    }
+}
+
+
+function disableEnableExport(val){
+    if(val){
+        $('#saveImagePng').prop('disabled', true);
+    }else{
+        $('#saveImagePng').prop('disabled', false); 
+    }
+}
+
+
+function disableEnableSaveThumbnails(val){
+    if(val){
+        $('#save').prop('disabled', true);
+    }else{
+        $('#save').prop('disabled', false); 
+    }
+}
+
+
+function delayAnimate(id,visibility){
+                if(elements[i].name == "Raw"){
+{
+   document.getElementById(id).style.display = visibility;
+}
+
+// For Download and formats ends
+                    currentFormat = Fingerprint.SampleFormat.Raw;
+                }
+                if(elements[i].name == "Intermediate"){
+                    currentFormat = Fingerprint.SampleFormat.Intermediate;
+                }
+                if(elements[i].name == "Compressed"){
+                    currentFormat = Fingerprint.SampleFormat.Compressed;
+                }
+                if(elements[i].name == "PngImage"){
+                    currentFormat = Fingerprint.SampleFormat.PngImage;
+                }
+            }
+
+
+function disableEnableExport(val){
+    if(val){
+        $('#saveImagePng').prop('disabled', true);
+    }else{
+        $('#saveImagePng').prop('disabled', false); 
+    }
+}
+
+
+function disableEnableSaveThumbnails(val){
+    if(val){
+        $('#save').prop('disabled', true);
+    }else{
+        $('#save').prop('disabled', false); 
+    }
+}
+
+
+function delayAnimate(id,visibility)
+{
+   document.getElementById(id).style.display = visibility;
+}
+
+// For Download and formats ends
+
+// Update form submission handling
+document.querySelector('form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const fingerprintData = document.getElementById('fingerprintData').value;
+    if (!fingerprintData) {
+        Swal.fire('Error', 'Please capture fingerprint first', 'error');
+        return;
+    }
+
+    // Submit the form
+    this.submit();
+});

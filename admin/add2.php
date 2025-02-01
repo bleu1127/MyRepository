@@ -2,6 +2,14 @@
 session_start();
 include('authentication.php');
 include('includes/header.php');
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $_SESSION['sa_form_data'] = array_merge($_SESSION['sa_form_data'] ?? [], $_POST);
+    header('Location: add3.php');
+    exit();
+}
+
+$formData = $_SESSION['sa_form_data'] ?? [];
 ?>
 
 <div class="container-fluid px-4">
@@ -9,7 +17,7 @@ include('includes/header.php');
     <div class="row">
 
         <div class="col-md-12">
-            <!-- <?php include('message.php'); ?> -->
+            <?php include('message.php'); ?>
             <div class="card">
                 <div class="card-header">
                     <h4>Register Student Assistants
@@ -18,11 +26,9 @@ include('includes/header.php');
                 </div>
                 <div class="card-body">
                     <form class="row g-3" action="add3.php" method="POST" enctype="multipart/form-data">
-                        <!-- Preserve image file -->
                         <?php if(isset($_FILES['image'])): ?>
                             <input type="hidden" name="image" value="<?php echo htmlspecialchars($_FILES['image']['name']); ?>">
                             <?php
-                            // Move uploaded file to temp location
                             $tmpImage = $_FILES['image']['tmp_name'];
                             if(!empty($tmpImage)) {
                                 $_SESSION['temp_image'] = $tmpImage;
@@ -30,7 +36,6 @@ include('includes/header.php');
                             ?>
                         <?php endif; ?>
                         <?php
-                        // Carry forward data from previous form
                         foreach($_POST as $key => $value) {
                             if(is_array($value)) {
                                 foreach($value as $item) {
@@ -72,7 +77,8 @@ include('includes/header.php');
                                 <label for="offices" class="form-label"><strong>Offices</strong></label>
                                 <?php foreach ($offices as $office): ?>
                                     <div>
-                                        <input type="checkbox" name="work_in[]" value="<?php echo htmlspecialchars($office); ?>">
+                                        <input type="checkbox" name="work_in[]" value="<?php echo htmlspecialchars($office); ?>"
+                                               <?php echo in_array($office, $formData['work_in'] ?? []) ? 'checked' : ''; ?>>
                                         <?php echo htmlspecialchars($office); ?>
                                     </div>
                                 <?php endforeach; ?>
@@ -82,7 +88,8 @@ include('includes/header.php');
                                 <label for="laboratories" class="form-label"><strong>Laboratories</strong></label>
                                 <?php foreach ($laboratories as $laboratory): ?>
                                     <div>
-                                        <input type="checkbox" name="work_in[]" value="<?php echo htmlspecialchars($laboratory); ?>">
+                                        <input type="checkbox" name="work_in[]" value="<?php echo htmlspecialchars($laboratory); ?>"
+                                               <?php echo in_array($laboratory, $formData['work_in'] ?? []) ? 'checked' : ''; ?>>
                                         <?php echo htmlspecialchars($laboratory); ?>
                                     </div>
                                 <?php endforeach; ?>
@@ -92,7 +99,8 @@ include('includes/header.php');
                                 <label for="manpower_services" class="form-label"><strong>Manpower Services</strong></label>
                                 <?php foreach ($manpower_services as $service): ?>
                                     <div>
-                                        <input type="checkbox" name="work_in[]" value="<?php echo htmlspecialchars($service); ?>">
+                                        <input type="checkbox" name="work_in[]" value="<?php echo htmlspecialchars($service); ?>"
+                                               <?php echo in_array($service, $formData['work_in'] ?? []) ? 'checked' : ''; ?>>
                                         <?php echo htmlspecialchars($service); ?>
                                     </div>
                                 <?php endforeach; ?>
@@ -111,7 +119,6 @@ include('includes/header.php');
 </div>
 
 <?php
-// Process the uploaded image
 if(isset($_FILES['profile_image']) && $_FILES['profile_image']['error'] == UPLOAD_ERR_OK) {
     $temp_dir = "../images/uploads/temp/";
     if(!is_dir($temp_dir)) {
@@ -121,7 +128,6 @@ if(isset($_FILES['profile_image']) && $_FILES['profile_image']['error'] == UPLOA
     $image = $_FILES['profile_image']['name'];
     $tmp_image = $_FILES['profile_image']['tmp_name'];
 
-    // Generate unique temp filename
     $extension = pathinfo($image, PATHINFO_EXTENSION);
     $temp_filename = 'temp_' . time() . '_' . uniqid() . '.' . $extension;
     $temp_filepath = $temp_dir . $temp_filename;

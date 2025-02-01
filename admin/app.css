@@ -134,3 +134,70 @@ span {
   gap: 10px;
   justify-content: center;
 }
+
+/* Fingerprint Capture Styles */
+.fingerprint-container {
+  max-width: 600px;
+  margin: 30px auto;
+  padding: 20px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.scan-quality {
+  margin-bottom: 20px;
+}
+
+.scan-quality .form-control {
+  background-color: #DCDCDC;
+  text-align: center;
+}
+
+.preview-box {
+  min-height: 300px;
+  border: 2px dashed #ccc;
+  margin: 20px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f9f9f9;
+}
+
+.message-box {
+  padding: 10px;
+  margin-bottom: 15px;
+  border-radius: 4px;
+  background: #e9ecef;
+  text-align: center;
+}
+
+.control-buttons {
+  margin: 20px 0;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+/* Additional helper classes */
+.text-center {
+  text-align: center;
+}
+
+.mb-4 {
+  margin-bottom: 1.5rem;
+}
+
+.btn-sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+  border-radius: 0.2rem;
+}
+
+.float-end {
+  float: right;
+}
+
+.text-muted {
+  color: #6c757d;
+}

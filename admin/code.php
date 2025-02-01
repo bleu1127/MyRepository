@@ -76,7 +76,26 @@ if (isset($_POST['delete_user1'])) {
     }
 }
 
+if(isset($_POST['delete_user_permanent']))
+{
+    $user_id = mysqli_real_escape_string($con, $_POST['delete_user_permanent']);
 
+    $query = "DELETE FROM admin WHERE id='$user_id'";
+    $query_run = mysqli_query($con, $query);
+
+    if($query_run)
+    {
+        $_SESSION['message'] = "User Permanently Deleted Successfully";
+        header("Location: restoreacc.php");
+        exit(0);
+    }
+    else
+    {
+        $_SESSION['message'] = "Something Went Wrong!";
+        header("Location: restoreacc.php");
+        exit(0);
+    }
+}
 
 if (isset($_POST['delete_user'])) {
     $user_id = $_POST['delete_user'];
@@ -97,6 +116,26 @@ if (isset($_POST['delete_user'])) {
     }
 }
 
+if(isset($_POST['delete_permanent']))
+{
+    $user_id = mysqli_real_escape_string($con, $_POST['delete_permanent']);
+
+    $query = "DELETE FROM student_assistant WHERE id='$user_id'";
+    $query_run = mysqli_query($con, $query);
+
+    if($query_run)
+    {
+        $_SESSION['message'] = "Student Assistant Permanently Deleted Successfully";
+        header("Location: restore.php");
+        exit(0);
+    }
+    else
+    {
+        $_SESSION['message'] = "Something Went Wrong!";
+        header("Location: restore.php");
+        exit(0);
+    }
+}
 
 if (isset($_POST['update_user'])) { 
     $user_id = $_POST['user_id'];

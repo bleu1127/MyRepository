@@ -24,7 +24,7 @@ include('includes/header.php');
                                 <th>UserName</th>
                                 <th>Email</th>
                                 <th>Role</th>
-                                <th>Restore</th>
+                                <th>Action</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -51,9 +51,9 @@ include('includes/header.php');
                                         </td>
                                         <td>
                                             <button type="button" name="restore_btn1" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#restoreModal" data-id="<?= $row['id']; ?>" data-name="<?= htmlspecialchars($row['name']); ?>">Restore</button>
+                                            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal" data-id="<?= $row['id']; ?>" data-name="<?= htmlspecialchars($row['name']); ?>">Delete Permanently</button>
                                         </td>
-
-
+                                    </tr>
 
                                     <?php
 
@@ -96,6 +96,28 @@ include('includes/header.php');
     </div>
 </div>
 
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Confirm Permanent Deletion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-danger">Warning: This action cannot be undone!</p>
+                <p>Are you sure you want to permanently delete <span id="deleteStudentName"></span>?</p>
+            </div>
+            <div class="modal-footer">
+                <form action="code.php" method="POST" id="deleteForm">
+                    <input type="hidden" name="delete_user_permanent" id="deleteUserId">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger">Delete Permanently</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     let restoreModal = document.getElementById('restoreModal');
@@ -112,10 +134,21 @@ document.addEventListener('DOMContentLoaded', function() {
         modalBody.textContent = 'Are you sure you want to restore ' + userName + '?';
         restoreUserId.value = userId;
     });
+
+    let deleteModal = document.getElementById('deleteModal');
+    deleteModal.addEventListener('show.bs.modal', function(event) {
+        let button = event.relatedTarget;
+        let userId = button.getAttribute('data-id');
+        let userName = button.getAttribute('data-name');
+        let modalBody = deleteModal.querySelector('.modal-body #deleteStudentName');
+        let deleteForm = document.getElementById('deleteForm');
+        let deleteUserId = document.getElementById('deleteUserId');
+        
+        modalBody.textContent = userName;
+        deleteUserId.value = userId;
+    });
 });
 </script>
-
-
 
 <?php
 include('includes/footer.php');
