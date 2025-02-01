@@ -15,6 +15,15 @@
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://use.fontawesome.com/releases/v6.1.0/js/all.js"></script>
+    <script>
+    // Handle back button navigation
+    window.addEventListener('pageshow', function(event) {
+        if (event.persisted) {
+            // Page was loaded from back/forward cache
+            window.location.reload();
+        }
+    });
+    </script>
 </head>
 
 <body class="sb-nav-fixed">

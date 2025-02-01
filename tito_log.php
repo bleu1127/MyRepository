@@ -251,6 +251,34 @@ function compareTemplates($template1, $template2) {
     return ($similarity / $minLen) > 0.7; 
 }
 
+function processAttendance($sa_id, $con) {
+    $date = date('Y-m-d');
+    $time = date('H:i:s');
+    $status = 'Time In';
+
+    $query = "SELECT * FROM attendance WHERE sa_id = ? AND date = ? AND time_out IS NULL";
+    $stmt = mysqli_prepare($con, $query);
+    mysqli_stmt_bind_param($stmt, "is", $sa_id, $date);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+
+    if (mysqli_num_rows($result) > 0) {
+        $status = 'Time Out';
+        $query = "UPDATE attendance SET time_out = ? WHERE sa_id = ? AND date = ? AND time_out IS NULL";
+        $stmt = mysqli_prepare($con, $query);
+        mysqli_stmt_bind_param($stmt, "sis", $time, $sa_id, $date);
+    } else {
+        $query = "INSERT INTO attendance (sa_id, date, time_in) VALUES (?, ?, ?)";
+        $stmt = mysqli_prepare($con, $query);
+        mysqli_stmt_bind_param($stmt, "iss", $sa_id, $date, $time);
+    }
+
+    mysqli_stmt_execute($stmt);
+    mysqli_stmt_close($stmt);
+
+    return $status;
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'match') {
     header('Content-Type: application/json');
     
