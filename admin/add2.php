@@ -1,9 +1,10 @@
 <?php
 session_start();
+ob_start();
 include('authentication.php');
 include('includes/header.php');
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['work_in'])) {
     $_SESSION['sa_form_data'] = array_merge($_SESSION['sa_form_data'] ?? [], $_POST);
     header('Location: add3.php');
     exit();

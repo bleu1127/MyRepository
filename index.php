@@ -17,13 +17,21 @@ if(empty($profileImage)) {
 }
 
 $latestLog = null;
-if ($sa_id) {
-    $stmt = mysqli_prepare($con, "SELECT * FROM attendance WHERE sa_id = ? ORDER BY date DESC, time_in DESC LIMIT 1");
-    mysqli_stmt_bind_param($stmt, "i", $sa_id);
-    mysqli_stmt_execute($stmt);
-    $result = mysqli_stmt_get_result($stmt);
-    $latestLog = mysqli_fetch_assoc($result);
-    mysqli_stmt_close($stmt);
+$saDetails = null;
+$query = "SELECT a.*, sa.* 
+          FROM attendance a 
+          JOIN student_assistant sa ON a.sa_id = sa.id 
+          WHERE sa.status != '2' 
+          ORDER BY a.date DESC, 
+          CASE 
+              WHEN a.time_out IS NOT NULL THEN a.time_out 
+              ELSE a.time_in 
+          END DESC 
+          LIMIT 1";
+$result = mysqli_query($con, $query);
+if ($row = mysqli_fetch_assoc($result)) {
+    $latestLog = $row;
+    $saDetails = $row;
 }
 
 ?>
@@ -42,54 +50,51 @@ if ($sa_id) {
     <div class="row">
         <div class="col-md-3">
             <div class="card">
-                <div class="card-header bg-primary text-white">
+                <div class= "card-header text-white" style="background-color: #F16E04;">
                     <h5 class="card-title mb-0">Student Assistant Profile</h5>
                 </div>
                 <div class="card-body text-center">
                     <?php 
                     $imagePath = 'images/defaultProfile.png';
-                    $name = "Student Assistant";
-                    $work = "Work in"; 
-                    $year = "Year";
+                    $name = "No Student Assistant Selected";
+                    $work = "Not Assigned";
+                    $year = "Not Set";
+                    $program = "No Program";
 
-                    if ($id) {
-                        $sa = "SELECT * FROM student_assistant WHERE id=?";
-                        if($stmt = mysqli_prepare($con, $sa)) {
-                            mysqli_stmt_bind_param($stmt, "s", $id);
-                            mysqli_stmt_execute($stmt);
-                            $result = mysqli_stmt_get_result($stmt);
-                            
-                            if($row = mysqli_fetch_array($result)) {
-                                $imagePath = !empty($row['image']) ? $row['image'] : './images/defaultProfile.png';
-                                $name = $row['first_name'] . ' ' . $row['last_name'];
-                                $work = $row['work'];
-                                $year = 'Year ' . $row['year'];
-                            }
-                            mysqli_stmt_close($stmt);
-                        }
+                    if ($saDetails) {
+                        $imagePath = !empty($saDetails['image']) ? $saDetails['image'] : 'images/defaultProfile.png';
+                        $name = $saDetails['first_name'] . ' ' . $saDetails['last_name'];
+                        $work = $saDetails['work'];
+                        $year = 'Year ' . $saDetails['year'];
+                        $program = $saDetails['program'];
                     }
                     ?>
-                    <img src="<?= $profileImage ?>" 
-                        class="mx-auto d-block" 
+                    <img src="<?= $imagePath ?>" 
+                        class="mx-auto d-block rounded-circle" 
                         alt="Profile Photo"    
-                        style="width: 200px; 
-                                height: 200px;
-                                object-fit: contain;
-                                border: 3px solid #c0c0c0;
-                                border-radius: 8px;
-                                background-color: #f8f9fa;
-                                margin-bottom: 15px;">
+                        style="width: 150px; 
+                               height: 150px;
+                               object-fit: cover;
+                               border: 3px solid #F16E04;
+                               margin-bottom: 15px;">
                     
                     <div class="card-body px-3 py-2">
-                    <h5 class="card-title"><?= $name ?></h5>
-                    <p class="card-text mb-1"><?= $work ?></p>
-                    <p class="card-text"><small class="text-muted"><?= $year ?></small></p>
+                        <h5 class="card-title mb-2"><?= $name ?></h5>
+                        <div class="text-muted mb-2">
+                            <i class="fas fa-graduation-cap me-1"></i> <?= $program ?>
+                        </div>
+                        <div class="text-muted mb-2">
+                            <i class="fas fa-user-clock me-1"></i> <?= $work ?>
+                        </div>
+                        <div class="badge bg-primary">
+                            <?= $year ?>
+                        </div>
                     </div>  
                 </div>
             </div>
 
             <div class="card mt-3">
-                <div class="card-header bg-primary text-white">
+                <div class="card-header text-white" style="background-color: #F16E04;">
                     <h5 class="card-title mb-0">Fingerprint Time In/Out</h5>
                 </div>
                 <div class="card-body">
@@ -131,11 +136,19 @@ if ($sa_id) {
                         </thead>
                         <tbody>
                         <?php
-                        if ($latestLog) {
+                        if ($latestLog && $saDetails) {
                             ?>
                             <tr>
-                                <td><?= $latestLog['user_id'] ?></td>
-                                <td><?= $name ?></td>
+                                <td><?= $saDetails['id'] ?></td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <img src="<?= $imagePath ?>" 
+                                             alt="Profile" 
+                                             class="rounded-circle me-2" 
+                                             style="width: 30px; height: 30px; object-fit: cover;">
+                                        <?= $saDetails['first_name'] . ' ' . $saDetails['last_name'] ?>
+                                    </div>
+                                </td>
                                 <td><?= date('Y-m-d', strtotime($latestLog['date'])) ?></td>
                                 <td><?= date('H:i:s', strtotime($latestLog['time_in'])) ?></td>
                                 <td><?= $latestLog['time_out'] ? date('H:i:s', strtotime($latestLog['time_out'])) : '-' ?></td>
@@ -154,6 +167,7 @@ if ($sa_id) {
                     </div>
                 </div>
             </div>
+
         </div>
         <div class="col-md-9">
             <div class="card">
@@ -186,10 +200,19 @@ if ($sa_id) {
                                         $query_run = mysqli_query($con, $query);
                                         if (mysqli_num_rows($query_run) > 0) {
                                             foreach ($query_run as $row) {
+                                                $imagePath = !empty($row['image']) ? $row['image'] : 'images/defaultProfile.png';
                                         ?>
                                                 <tr>
                                                     <td><?= $row['id']; ?></td>
-                                                    <td><?= $row['last_name']; ?></td>
+                                                    <td>
+                                                        <div class="d-flex align-items-center">
+                                                            <img src="<?= $imagePath ?>" 
+                                                                 alt="Profile" 
+                                                                 class="rounded-circle me-2" 
+                                                                 style="width: 40px; height: 40px; object-fit: cover;">
+                                                            <?= $row['last_name']; ?>
+                                                        </div>
+                                                    </td>
                                                     <td><?= $row['first_name']; ?></td>
                                                     <td><?= $row['work']; ?></td>
                                                     <td><?= $row['year']; ?></td>
@@ -385,15 +408,36 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateAttendanceDisplay(data) {
         const tbody = document.querySelector('.table-responsive tbody');
         if (tbody && data) {
+            const imagePath = data.image || 'images/defaultProfile.png';
+            
             const row = `
                 <tr>
                     <td>${data.sa_id}</td>
-                    <td>${data.name}</td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <img src="${imagePath}" 
+                                 alt="Profile" 
+                                 class="rounded-circle me-2" 
+                                 style="width: 40px; height: 40px; object-fit: cover;">
+                            ${data.name}
+                        </div>
+                    </td>
                     <td>${new Date().toISOString().split('T')[0]}</td>
                     <td>${data.action === 'Time In' ? data.time : '-'}</td>
                     <td>${data.action === 'Time Out' ? data.time : '-'}</td>
                 </tr>`;
             tbody.innerHTML = row;
+        }
+    
+        if (data) {
+            document.querySelector('.card-title').textContent = data.name;
+            if (data.program) document.querySelector('.fa-graduation-cap').parentNode.textContent = ' ' + data.program;
+            if (data.work) document.querySelector('.fa-user-clock').parentNode.textContent = ' ' + data.work;
+            if (data.year) document.querySelector('.badge').textContent = 'Year ' + data.year;
+            if (data.image) {
+                const profileImg = document.querySelector('.mx-auto.d-block');
+                profileImg.src = data.image;
+            }
         }
     }
 
