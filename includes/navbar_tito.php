@@ -9,7 +9,7 @@
     </button>
     <div class="collapse navbar-collapse" id="navbarSupportedContent">
       <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
-        <li class="nav-item d-flex align-items-center">
+        <li class="nav-item d-flex align-items-center me-4">
           <div class="datetime-container text-white d-flex align-items-center gap-3">
             <div class="date-group">
               <div id="day" style="font-weight: bold; font-size: 1.1rem; line-height: 1.2;"></div>
@@ -17,6 +17,12 @@
             </div>
             <div id="time" style="font-family: 'Courier New', monospace; font-size: 1.2rem; font-weight: bold; border-left: 2px solid rgba(255,255,255,0.3); padding-left: 12px;"></div>
           </div>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link text-white" href="login.php">Login</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link text-white" href="register.php">Register</a>
         </li>
       </ul>
     </div>
