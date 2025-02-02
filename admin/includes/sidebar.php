@@ -47,7 +47,19 @@
 
                 <div class="collapse" id="collapsePages" aria-labelledby="headingTwo" data-bs-parent="#sidenavAccordion">
                     <nav class="sb-sidenav-menu-nested nav accordion" id="sidenavAccordionPages">
-                        <a class="nav-link" href="tito.php">Time in / Time out</a>
+                    <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#pagesCollapseAuth" aria-expanded="false" aria-controls="pagesCollapseAuth">
+                            Time in / Time out
+                            <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
+                        </a>
+
+                        <div class="collapse" id="pagesCollapseAuth" aria-labelledby="headingOne" data-bs-parent="#sidenavAccordionPages">
+                            <nav class="sb-sidenav-menu-nested nav">
+                                <a class="nav-link" href="work_offices.php">Offices</a>
+                                <a class="nav-link" href="work_laboratories.php">Laboratories</a>
+                                <a class="nav-link" href="work_manpower_services.php">Manpower Services</a>
+                            </nav>
+                        </div>
+
                     </nav>
                 </div>
 

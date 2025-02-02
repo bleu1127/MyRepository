@@ -1,87 +1,312 @@
 <?php
+
 include('authentication.php');
 include('includes/header.php');
+
+// if(!isset($_SESSION['auth'])){
+//     header("Location: login.php?error_msg=Invalid Access");
+// }
 ?>
 
 <div class="container-fluid px-4">
-    <h4 class="mt-4">Student Assistants</h4>
+    <h1 class="mt-4">Time Log Report</h1>
     <ol class="breadcrumb mb-4">
-        <li class="breadcrumb-item active">Time Log Report</li>
     </ol>
     <div class="row">
-        <div class="col-md-12">
-            <div class="card">
-                <div class="card-header">
-                    <h4>Attendance</h4>
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-primary text-white mb-4">
+                <div class="card-body">January
+                <?php
+                    $dash_work_query = "SELECT sa.*, w.work_name 
+                           FROM student_assistant sa
+                           JOIN work w 
+                           ON sa.work LIKE CONCAT('%', w.work_name, '%')
+                           WHERE w.type = 'Office';";
+                    $dash_work_query_run = mysqli_query($con,$dash_work_query);
+
+                    if($work_total = mysqli_num_rows($dash_work_query_run)){
+                        echo '<h4 class="mb-0">'.$work_total.' </h4>';
+                    }else{
+                        echo '<h4 class="mb-0"> No Data </h4>';
+                    }
+                ?>
+
+                    
                 </div>
-                <div class="card-body">
-                    <table id="myTable" class="table table-bordered">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Last Name</th>
-                                <th>First Name</th>
-                                <th>Program</th>
-                                <th>Year</th>
-                                <th>Work In</th>
-                                <th>Date</th>
-                                <th>Day</th>
-                                <th>Time in</th>
-                                <th>Time out</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php
-                            $query = "SELECT sa.id, sa.last_name, sa.first_name, sa.program, sa.year, sa.work,
-                                     COALESCE(a.date, 'Not logged') as date,
-                                     COALESCE(a.day, 'Not logged') as day,
-                                     a.time_in,
-                                     a.time_out,
-                                     CASE 
-                                         WHEN a.time_in IS NULL AND a.time_out IS NULL THEN 'Not logged'
-                                         WHEN a.time_out IS NULL THEN 'Logged in'
-                                         ELSE 'Completed'
-                                     END as status
-                                     FROM student_assistant sa
-                                     LEFT JOIN attendance a ON sa.id = a.user_id
-                                     WHERE sa.status != '2'
-                                     ORDER BY sa.last_name, a.date DESC";
-                            
-                            $query_run = mysqli_query($con, $query);
-                            if (mysqli_num_rows($query_run) > 0) {
-                                foreach ($query_run as $row) {
-                            ?>
-                                    <tr>
-                                        <td><?= $row['id']; ?></td>
-                                        <td><?= $row['last_name']; ?></td>
-                                        <td><?= $row['first_name']; ?></td>
-                                        <td><?= $row['program']; ?></td>
-                                        <td><?= $row['year']; ?></td>
-                                        <td><?= $row['work']; ?></td>
-                                        <td><?= $row['date']; ?></td>
-                                        <td><?= $row['day']; ?></td>
-                                        <td><?= $row['time_in'] ? date('h:i A', strtotime($row['time_in'])) : 'Not logged'; ?></td>
-                                        <td><?= $row['time_out'] ? date('h:i A', strtotime($row['time_out'])) : 'Not logged'; ?></td>
-                                        <td><?= $row['status']; ?></td>
-                                    </tr>
-                                <?php
-                                }
-                            } else {
-                                ?>
-                                <tr>
-                                    <td colspan="11">No Record Found</td>
-                                </tr>
-                            <?php
-                            }
-                            ?>
-                        </tbody>
-                    </table>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small text-white stretched-link" href="offices.php">View</a>
+                    <div class="small text-white"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-warning text-white mb-4">
+                <div class="card-body">February
+                <?php
+                    $dash_work_query = "SELECT sa.*, w.work_name 
+                           FROM student_assistant sa
+                           JOIN work w 
+                           ON sa.work LIKE CONCAT('%', w.work_name, '%')
+                           WHERE w.type = 'Laboratory';";
+                    $dash_work_query_run = mysqli_query($con,$dash_work_query);
+
+                    if($work_total = mysqli_num_rows($dash_work_query_run)){
+                        echo '<h4 class="mb-0">'.$work_total.' </h4>';
+                    }else{
+                        echo '<h4 class="mb-0"> No Data </h4>';
+                    }
+                ?>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small text-white stretched-link" href="laboratories.php">View</a>
+                    <div class="small text-white"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-info text-white mb-4">
+                <div class="card-body">March
+                <?php
+                    $dash_work_query = "SELECT sa.*, w.work_name 
+                           FROM student_assistant sa
+                           JOIN work w 
+                           ON sa.work LIKE CONCAT('%', w.work_name, '%')
+                           WHERE w.type = 'Manpower Services';";
+                    $dash_work_query_run = mysqli_query($con,$dash_work_query);
+
+                    if($work_total = mysqli_num_rows($dash_work_query_run)){
+                        echo '<h4 class="mb-0">'.$work_total.' </h4>';
+                    }else{
+                        echo '<h4 class="mb-0"> No Data </h4>';
+                    }
+                ?>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small text-white stretched-link" href="services.php">View</a>
+                    <div class="small text-white"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-success text-white mb-4">
+                <div class="card-body">April
+                <?php
+                    $dash_work_query = "SELECT sa.*, w.work_name 
+                           FROM student_assistant sa
+                           JOIN work w 
+                           ON sa.work LIKE CONCAT('%', w.work_name, '%')
+                           WHERE w.type = 'Manpower Services';";
+                    $dash_work_query_run = mysqli_query($con,$dash_work_query);
+
+                    if($work_total = mysqli_num_rows($dash_work_query_run)){
+                        echo '<h4 class="mb-0">'.$work_total.' </h4>';
+                    }else{
+                        echo '<h4 class="mb-0"> No Data </h4>';
+                    }
+                ?>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small text-white stretched-link" href="services.php">View</a>
+                    <div class="small text-white"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-warning text-white mb-4">
+                <div class="card-body">May
+                <?php
+                    $dash_work_query = "SELECT sa.*, w.work_name 
+                           FROM student_assistant sa
+                           JOIN work w 
+                           ON sa.work LIKE CONCAT('%', w.work_name, '%')
+                           WHERE w.type = 'Manpower Services';";
+                    $dash_work_query_run = mysqli_query($con,$dash_work_query);
+
+                    if($work_total = mysqli_num_rows($dash_work_query_run)){
+                        echo '<h4 class="mb-0">'.$work_total.' </h4>';
+                    }else{
+                        echo '<h4 class="mb-0"> No Data </h4>';
+                    }
+                ?>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small text-white stretched-link" href="services.php">View</a>
+                    <div class="small text-white"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-info text-white mb-4">
+                <div class="card-body">June
+                <?php
+                    $dash_work_query = "SELECT sa.*, w.work_name 
+                           FROM student_assistant sa
+                           JOIN work w 
+                           ON sa.work LIKE CONCAT('%', w.work_name, '%')
+                           WHERE w.type = 'Manpower Services';";
+                    $dash_work_query_run = mysqli_query($con,$dash_work_query);
+
+                    if($work_total = mysqli_num_rows($dash_work_query_run)){
+                        echo '<h4 class="mb-0">'.$work_total.' </h4>';
+                    }else{
+                        echo '<h4 class="mb-0"> No Data </h4>';
+                    }
+                ?>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small text-white stretched-link" href="services.php">View</a>
+                    <div class="small text-white"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-success text-white mb-4">
+                <div class="card-body">July
+                <?php
+                    $dash_work_query = "SELECT sa.*, w.work_name 
+                           FROM student_assistant sa
+                           JOIN work w 
+                           ON sa.work LIKE CONCAT('%', w.work_name, '%')
+                           WHERE w.type = 'Manpower Services';";
+                    $dash_work_query_run = mysqli_query($con,$dash_work_query);
+
+                    if($work_total = mysqli_num_rows($dash_work_query_run)){
+                        echo '<h4 class="mb-0">'.$work_total.' </h4>';
+                    }else{
+                        echo '<h4 class="mb-0"> No Data </h4>';
+                    }
+                ?>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small text-white stretched-link" href="services.php">View</a>
+                    <div class="small text-white"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-primary text-white mb-4">
+                <div class="card-body">August
+                <?php
+                    $dash_work_query = "SELECT sa.*, w.work_name 
+                           FROM student_assistant sa
+                           JOIN work w 
+                           ON sa.work LIKE CONCAT('%', w.work_name, '%')
+                           WHERE w.type = 'Manpower Services';";
+                    $dash_work_query_run = mysqli_query($con,$dash_work_query);
+
+                    if($work_total = mysqli_num_rows($dash_work_query_run)){
+                        echo '<h4 class="mb-0">'.$work_total.' </h4>';
+                    }else{
+                        echo '<h4 class="mb-0"> No Data </h4>';
+                    }
+                ?>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small text-white stretched-link" href="services.php">View</a>
+                    <div class="small text-white"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-info text-white mb-4">
+                <div class="card-body">September
+                <?php
+                    $dash_work_query = "SELECT sa.*, w.work_name 
+                           FROM student_assistant sa
+                           JOIN work w 
+                           ON sa.work LIKE CONCAT('%', w.work_name, '%')
+                           WHERE w.type = 'Manpower Services';";
+                    $dash_work_query_run = mysqli_query($con,$dash_work_query);
+
+                    if($work_total = mysqli_num_rows($dash_work_query_run)){
+                        echo '<h4 class="mb-0">'.$work_total.' </h4>';
+                    }else{
+                        echo '<h4 class="mb-0"> No Data </h4>';
+                    }
+                ?>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small text-white stretched-link" href="services.php">View</a>
+                    <div class="small text-white"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-success text-white mb-4">
+                <div class="card-body">October
+                <?php
+                    $dash_work_query = "SELECT sa.*, w.work_name 
+                           FROM student_assistant sa
+                           JOIN work w 
+                           ON sa.work LIKE CONCAT('%', w.work_name, '%')
+                           WHERE w.type = 'Manpower Services';";
+                    $dash_work_query_run = mysqli_query($con,$dash_work_query);
+
+                    if($work_total = mysqli_num_rows($dash_work_query_run)){
+                        echo '<h4 class="mb-0">'.$work_total.' </h4>';
+                    }else{
+                        echo '<h4 class="mb-0"> No Data </h4>';
+                    }
+                ?>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small text-white stretched-link" href="services.php">View</a>
+                    <div class="small text-white"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-primary text-white mb-4">
+                <div class="card-body">November
+                <?php
+                    $dash_work_query = "SELECT sa.*, w.work_name 
+                           FROM student_assistant sa
+                           JOIN work w 
+                           ON sa.work LIKE CONCAT('%', w.work_name, '%')
+                           WHERE w.type = 'Manpower Services';";
+                    $dash_work_query_run = mysqli_query($con,$dash_work_query);
+
+                    if($work_total = mysqli_num_rows($dash_work_query_run)){
+                        echo '<h4 class="mb-0">'.$work_total.' </h4>';
+                    }else{
+                        echo '<h4 class="mb-0"> No Data </h4>';
+                    }
+                ?>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small text-white stretched-link" href="services.php">View</a>
+                    <div class="small text-white"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card bg-warning text-white mb-4">
+                <div class="card-body">December
+                <?php
+                    $dash_work_query = "SELECT sa.*, w.work_name 
+                           FROM student_assistant sa
+                           JOIN work w 
+                           ON sa.work LIKE CONCAT('%', w.work_name, '%')
+                           WHERE w.type = 'Manpower Services';";
+                    $dash_work_query_run = mysqli_query($con,$dash_work_query);
+
+                    if($work_total = mysqli_num_rows($dash_work_query_run)){
+                        echo '<h4 class="mb-0">'.$work_total.' </h4>';
+                    }else{
+                        echo '<h4 class="mb-0"> No Data </h4>';
+                    }
+                ?>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small text-white stretched-link" href="services.php">View</a>
+                    <div class="small text-white"></div>
                 </div>
             </div>
         </div>
     </div>
+
 </div>
+
 
 <?php
 include('includes/footer.php');
