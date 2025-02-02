@@ -1,4 +1,5 @@
 <?php
+date_default_timezone_set('Asia/Manila');
 session_start();
 include('admin/config/dbcon.php');
 
@@ -23,42 +24,29 @@ try {
     $result = mysqli_stmt_get_result($stmt);
     
     if ($sa = mysqli_fetch_assoc($result)) {
-        $check_query = "SELECT * FROM attendance WHERE sa_id = ? AND date = CURDATE() ORDER BY time_in DESC LIMIT 1";
+        $date = date('Y-m-d');
+        $time = date('H:i:s');
+        
+        $check_query = "SELECT * FROM attendance WHERE sa_id = ? AND date = ? AND time_out IS NULL";
         $check_stmt = mysqli_prepare($con, $check_query);
-        mysqli_stmt_bind_param($check_stmt, "i", $sa['id']);
+        mysqli_stmt_bind_param($check_stmt, "is", $sa['id'], $date);
         mysqli_stmt_execute($check_stmt);
         $check_result = mysqli_stmt_get_result($check_stmt);
-        $last_attendance = mysqli_fetch_assoc($check_result);
-        
-        if (!$last_attendance) {
-            $query = "INSERT INTO attendance (sa_id, date, day, time_in, status) 
-                     VALUES (?, CURDATE(), DAYNAME(CURDATE()), NOW(), 'Present')";
+
+        if (mysqli_num_rows($check_result) > 0) {
+            $status = 'Completed';
+            $query = "UPDATE attendance SET time_out = ?, status = ? WHERE sa_id = ? AND date = ? AND time_out IS NULL";
             $stmt = mysqli_prepare($con, $query);
-            mysqli_stmt_bind_param($stmt, "i", $sa['id']);
-            $action = "Time In";
-        } else if (!$last_attendance['time_out']) {
-            if (empty($data['confirm']) || $data['confirm'] !== true) {
-                echo json_encode([
-                    'success' => false,
-                    'confirmation_required' => true,
-                    'message' => 'Are you sure you want to log out?'
-                ]);
-                exit;
-            }
-            $query = "UPDATE attendance 
-                      SET time_out = NOW(), status = 'Completed' 
-                      WHERE id = ?";
-            $stmt = mysqli_prepare($con, $query);
-            mysqli_stmt_bind_param($stmt, "i", $last_attendance['id']);
+            mysqli_stmt_bind_param($stmt, "ssis", $time, $status, $sa['id'], $date);
             $action = "Time Out";
         } else {
-            echo json_encode([
-                'success' => false,
-                'message' => 'Already completed attendance for today'
-            ]);
-            exit;
+            $status = 'Present';
+            $query = "INSERT INTO attendance (sa_id, date, time_in, status) VALUES (?, ?, ?, ?)";
+            $stmt = mysqli_prepare($con, $query);
+            mysqli_stmt_bind_param($stmt, "isss", $sa['id'], $date, $time, $status);
+            $action = "Time In";
         }
-        
+
         if (mysqli_stmt_execute($stmt)) {
             $message = "{$action} recorded for {$sa['first_name']} {$sa['last_name']}";
             echo json_encode([
@@ -68,7 +56,7 @@ try {
                     'sa_id' => $sa['id'],
                     'name' => $sa['first_name'] . ' ' . $sa['last_name'],
                     'action' => $action,
-                    'time' => date('H:i:s')
+                    'time' => $time
                 ]
             ]);
         } else {

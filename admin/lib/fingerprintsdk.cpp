@@ -5,8 +5,8 @@
 
 // WiFi credentials
 const char* ssid = "WiFi SSID";
-const char* password = "WIfi password";
-const char* serverUrl = "http://xx.xx.xx.xx/sa_management_system/fingerprint.php";
+const char* password = "WIfi Password";
+const char* serverUrl = "http://192.168.0.101/sa_management_system/fingerprint.php"; // Pc ip address with xampp
 
 // DY50 uses Hardware Serial2 (pins 16,17 on ESP32)
 Adafruit_Fingerprint finger = Adafruit_Fingerprint(&Serial2);
@@ -385,29 +385,31 @@ String enrollFingerprint() {
     return response;
 }
 
-// Modified matchFingerprint function to use fingerFastSearch directly
+// Modified matchFingerprint function to use a proper buffer and timeout
 String matchFingerprint() {
     uint8_t p = FINGERPRINT_NOFINGER;
-  
-    // Wait for finger placement (single capture loop)
-    while (true) {
+    unsigned long startTime = millis();
+    const unsigned long timeoutDuration = 10000; // 10 seconds timeout
+
+    // Wait for finger placement with timeout
+    while (millis() - startTime < timeoutDuration) {
         p = finger.getImage();
-        switch(p) {
-            case FINGERPRINT_OK:
-                goto captured;
-            case FINGERPRINT_NOFINGER:
-                // Waiting for finger...
-                break;
-            default:
-                Serial.println("Error capturing image");
-                delay(2000);
-                return "{\"status\":\"error\",\"message\":\"Error capturing fingerprint\"}";
+        if (p == FINGERPRINT_OK) {
+            break;
+        }
+        else if(p != FINGERPRINT_NOFINGER) {
+            Serial.println("Error capturing image");
+            delay(2000);
+            return "{\"status\":\"error\",\"message\":\"Error capturing fingerprint\"}";
         }
         delay(100);
     }
-captured:
+    if (p != FINGERPRINT_OK) {
+        return "{\"status\":\"error\",\"message\":\"Fingerprint not detected within timeout\"}";
+    }
+
     Serial.println("Image captured, converting...");
-    p = finger.image2Tz();
+    p = finger.image2Tz(1); 
     if (p != FINGERPRINT_OK) {
         Serial.println("Conversion failed");
         delay(2000);

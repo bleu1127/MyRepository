@@ -4,16 +4,11 @@ include('admin/config/dbcon.php');
 header('Content-Type: application/json');
 
 try {
-    // Get the most recent SA activity (either time in or time out)
     $query = "SELECT sa.*, a.time_in, a.time_out, a.date 
               FROM student_assistant sa 
-              INNER JOIN attendance a ON sa.id = a.sa_id 
-              WHERE sa.status != '2' 
-              ORDER BY 
-                CASE 
-                    WHEN a.time_out IS NOT NULL THEN a.time_out 
-                    ELSE a.time_in 
-                END DESC 
+              JOIN attendance a ON sa.id = a.sa_id 
+              WHERE sa.status != '2' AND a.date = CURDATE()
+              ORDER BY COALESCE(a.time_out, a.time_in) DESC
               LIMIT 1";
     
     $result = mysqli_query($con, $query);

@@ -33,6 +33,22 @@ $query = "SELECT a.*, sa.*
               ELSE a.time_in 
           END DESC";
 $result_latest = mysqli_query($con, $query);
+
+$latest_sa_query = "SELECT a.*, sa.* 
+                    FROM attendance a 
+                    JOIN student_assistant sa ON a.sa_id = sa.id 
+                    WHERE sa.status != '2' AND a.date = CURDATE() 
+                    ORDER BY COALESCE(a.time_out, a.time_in) DESC 
+                    LIMIT 1";
+$result_sa = mysqli_query($con, $latest_sa_query);
+$latest_sa = mysqli_fetch_assoc($result_sa);
+
+$profileImage = $latest_sa['image'] ?? 'images/defaultProfile.png';
+$name = isset($latest_sa['first_name'], $latest_sa['last_name']) ? $latest_sa['first_name'].' '.$latest_sa['last_name'] : 'No SA Time In Today Yet';
+$work = $latest_sa['work'] ?? 'Work';
+$year = isset($latest_sa['year']) ? 'Year ' . $latest_sa['year'] : 'Year';
+$program = $latest_sa['program'] ?? 'Program';
+
 ?>
 
 <div class="container mt-3">
@@ -53,22 +69,7 @@ $result_latest = mysqli_query($con, $query);
                     <h5 class="card-title mb-0">Student Assistant Profile</h5>
                 </div>
                 <div class="card-body text-center">
-                    <?php 
-                    $imagePath = 'images/defaultProfile.png';
-                    $name = "No Student Assistant Has Time In Today Yet";
-                    $work = "Work";
-                    $year = "Year";
-                    $program = "Program";
-
-                    if ($saDetails && $latestLog && $latestLog['date'] === date('Y-m-d')) {
-                        $imagePath = !empty($saDetails['image']) ? $saDetails['image'] : 'images/defaultProfile.png';
-                        $name = $saDetails['first_name'] . ' ' . $saDetails['last_name'];
-                        $work = $saDetails['work'];
-                        $year = 'Year ' . $saDetails['year'];
-                        $program = $saDetails['program'];
-                    }
-                    ?>
-                    <img src="<?= $imagePath ?>" 
+                    <img src="<?= $profileImage ?>" 
                          id="profilePic"
                          class="mx-auto d-block rounded-circle" 
                          alt="Profile Photo"    
@@ -117,60 +118,6 @@ $result_latest = mysqli_query($con, $query);
                     </form>
                 </div>
             </div>
-
-            <div class="card mt-3">
-                <div class="card-header" style="background-color: #F16E04;">
-                    <h5 class="card-title text-white mb-0">Latest Time Log</h5>
-                </div>
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-sm table-bordered mb-0" style="font-size: 12px;">
-                        <thead>
-                            <tr>
-                            <th>ID</th>
-                            <th>Name</th>
-                            <th>Date</th>
-                            <th>Time In</th>
-                            <th>Time Out</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                        <?php
-                        if (mysqli_num_rows($result_latest) > 0) {
-                            while ($row = mysqli_fetch_assoc($result_latest)) {
-                                $logImage = !empty($row['image']) ? $row['image'] : 'images/defaultProfile.png';
-                                ?>
-                                <tr>
-                                    <td><?= $row['id'] ?></td>
-                                    <td>
-                                        <div class="d-flex align-items-center">
-                                            <img src="<?= $logImage ?>" 
-                                                 alt="Profile" 
-                                                 class="rounded-circle me-2" 
-                                                 style="width: 30px; height: 30px; object-fit: cover;">
-                                            <?= $row['first_name'] . ' ' . $row['last_name'] ?>
-                                        </div>
-                                    </td>
-                                    <td><?= date('Y-m-d', strtotime($row['date'])) ?></td>
-                                    <td><?= date('H:i:s', strtotime($row['time_in'])) ?></td>
-                                    <td><?= $row['time_out'] ? date('H:i:s', strtotime($row['time_out'])) : '-' ?></td>
-                                </tr>
-                                <?php
-                            }
-                        } else {
-                            ?>
-                            <tr>
-                                <td colspan="5" class="text-center">No logs available</td>
-                            </tr>
-                            <?php
-                        }
-                        ?>
-                        </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
         </div>
         <div class="col-md-9">
             <div class="card">
@@ -180,35 +127,31 @@ $result_latest = mysqli_query($con, $query);
                 <div class="card-body">
                     <div class="table-responsive" style="height: 730px; overflow-y: auto;">
                         <?php
-                        $query = "SELECT sa.*, a.date, a.day, a.time_in, a.time_out 
-                                  FROM student_assistant sa 
-                                  LEFT JOIN attendance a ON sa.id = a.sa_id AND a.date = CURDATE() 
-                                  WHERE sa.status!='2'";
+                        $query = "SELECT a.*, sa.first_name, sa.last_name, sa.work, sa.year, sa.image 
+                                  FROM attendance a 
+                                  JOIN student_assistant sa ON a.sa_id = sa.id 
+                                  WHERE a.date = CURDATE() 
+                                  ORDER BY a.date DESC, COALESCE(a.time_out, a.time_in) DESC";
                         $query_run = mysqli_query($con, $query);
                         ?>
                         <table class="table table-bordered table-striped table-hover" style="font-size: 14px;">
                             <thead style="position: sticky; top: 0; background: white; z-index: 1;">
                                 <tr>
                                     <th>ID</th>
-                                    <th>Last Name</th>
                                     <th>First Name</th>
-                                    <th>Work in</th>
+                                    <th>Last Name</th>
+                                    <th>Work</th>
                                     <th>Year</th>
                                     <th>Date</th>
-                                    <th>Day</th>
-                                    <th>Time in</th>
-                                    <th>Time out</th>
+                                    <th>Time In</th>
+                                    <th>Time Out</th>
                                     <th>Status</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <?php
                                 if (mysqli_num_rows($query_run) > 0) {
-                                    foreach ($query_run as $row) {
-                                        $status_display = $row['status'] ?? '';
-                                        if (empty($status_display)) {
-                                            $status_display = "Pending";
-                                        }                                  
+                                    while ($row = mysqli_fetch_assoc($query_run)) {
                                 ?>
                                 <tr>
                                     <td><?= $row['id']; ?></td>
@@ -218,24 +161,20 @@ $result_latest = mysqli_query($con, $query);
                                                  alt="Profile" 
                                                  class="rounded-circle me-2" 
                                                  style="width: 40px; height: 40px; object-fit: cover;">
-                                            <?= $row['last_name']; ?>
+                                            <?= $row['first_name'] . ' ' . $row['last_name']; ?>
                                         </div>
                                     </td>
-                                    <td><?= $row['first_name']; ?></td>
-                                    <td><?= $row['work']; ?></td>
-                                    <td><?= $row['year']; ?></td>
-                                    <td><?= !empty($row['date']) ? date('Y-m-d', strtotime($row['date'])) : '-'; ?></td>
-                                    <td><?= $row['day'] ?? '-'; ?></td>
+                                    <td><?= $row['date']; ?></td>
                                     <td><?= !empty($row['time_in']) ? date('H:i:s', strtotime($row['time_in'])) : '-'; ?></td>
                                     <td><?= !empty($row['time_out']) ? date('H:i:s', strtotime($row['time_out'])) : '-'; ?></td>
-                                    <td><?= $status_display; ?></td>
+                                    <td><?= $row['status'] ?? 'Pending'; ?></td>
                                 </tr>
                                 <?php
                                     }
                                 } else {
                                 ?>
                                 <tr>
-                                    <td colspan="10">No Record Found</td>
+                                    <td colspan="8">No Record Found</td>
                                 </tr>
                                 <?php } ?>
                             </tbody>
@@ -578,12 +517,11 @@ document.addEventListener('DOMContentLoaded', function() {
                             <td>${sa.work}</td>
                             <td>${sa.year}</td>
                             <td>${sa.date || '-'}</td>
-                            <td>${sa.day || '-'}</td>
                             <td>${sa.time_in || '-'}</td>
                             <td>${sa.time_out || '-'}</td>
                             <td>${sa.status || 'Pending'}</td>
                         </tr>
-                    `).join('') || '<tr><td colspan="10">No Record Found</td></tr>';
+                    `).join('') || '<tr><td colspan="9">No Record Found</td></tr>';
                 }
             }
         } catch (error) {

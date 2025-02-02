@@ -1,10 +1,10 @@
 <?php
+date_default_timezone_set('Asia/Manila');
 session_start();
 include('admin/config/dbcon.php');
 header('Content-Type: application/json');
 
 try {
-    // Get latest logs
     $latest_query = "SELECT a.*, sa.first_name, sa.last_name, sa.image 
                     FROM attendance a 
                     JOIN student_assistant sa ON a.sa_id = sa.id 
@@ -29,12 +29,11 @@ try {
             'time_out' => $row['time_out'] ? date('H:i:s', strtotime($row['time_out'])) : null
         ];
     }
-
-    // Get attendance sheet
-    $attendance_query = "SELECT sa.*, a.date, a.day, a.time_in, a.time_out, a.status
-                        FROM student_assistant sa 
-                        LEFT JOIN attendance a ON sa.id = a.sa_id AND a.date = CURDATE() 
-                        WHERE sa.status != '2'";
+    $attendance_query = "SELECT a.*, sa.first_name, sa.last_name, sa.image, sa.work, sa.year
+                         FROM attendance a
+                         JOIN student_assistant sa ON a.sa_id = sa.id
+                         WHERE DATE(a.date) = CURDATE()
+                         ORDER BY a.date DESC, COALESCE(a.time_out, a.time_in) DESC";
     $attendance_result = mysqli_query($con, $attendance_query);
     $attendance_sheet = [];
 
@@ -47,7 +46,6 @@ try {
             'work' => $row['work'],
             'year' => $row['year'],
             'date' => $row['date'],
-            'day' => $row['day'],
             'time_in' => $row['time_in'],
             'time_out' => $row['time_out'],
             'status' => $row['status']
