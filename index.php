@@ -205,7 +205,10 @@ $result_latest = mysqli_query($con, $query);
                                 <?php
                                 if (mysqli_num_rows($query_run) > 0) {
                                     foreach ($query_run as $row) {
-                                        $status_display = "Pending";                                  
+                                        $status_display = $row['status'] ?? '';
+                                        if (empty($status_display)) {
+                                            $status_display = "Pending";
+                                        }                                  
                                 ?>
                                 <tr>
                                     <td><?= $row['id']; ?></td>
@@ -391,31 +394,46 @@ document.addEventListener('DOMContentLoaded', function() {
         if (retryTimeout) clearTimeout(retryTimeout);
         retryTimeout = setTimeout(startFingerprintMatching, 1000);
     }
+
     async function processAttendance(fingerprintId, confirmLogout = false) {
         try {
+            updateStatus('Processing...', 'info');
+            document.getElementById('fingerprintIcon').style.color = '#007bff';
+
             let bodyData = { fingerprintId: fingerprintId };
             if (confirmLogout) {
                 bodyData.confirm = true;
             }
+
             const response = await fetch('process_attendance.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(bodyData)
             });
+
             const result = await response.json();
             
             if (result.confirmation_required) {
                 showLogoutConfirmation(fingerprintId);
             } else if (result.success) {
+                document.getElementById('fingerprintIcon').style.color = '#28a745';
                 updateStatus(result.message, 'success');
                 if (result.data) {
                     updateAttendanceDisplay(result.data);
                 }
+                await refreshAttendanceData();
             } else {
+                document.getElementById('fingerprintIcon').style.color = '#dc3545';
                 updateStatus(result.message || 'Failed to process attendance', 'warning');
             }
+
+            setTimeout(() => {
+                document.getElementById('fingerprintIcon').style.color = '#007bff';
+            }, 1000);
+
         } catch (error) {
             console.error('Attendance processing error:', error);
+            document.getElementById('fingerprintIcon').style.color = '#dc3545';
             updateStatus('Error processing attendance', 'danger');
         }
     }
@@ -491,16 +509,89 @@ document.addEventListener('DOMContentLoaded', function() {
             if(result.success && result.data) {
                 const sa = result.data;
                 document.getElementById('profilePic').src = sa.image || 'images/defaultProfile.png';
-                document.getElementById('profileName').textContent = sa.first_name + ' ' + sa.last_name;
+                document.getElementById('profileName').textContent = 
+                    `${sa.first_name} ${sa.last_name}`;
                 document.getElementById('profileProgram').textContent = sa.program;
                 document.getElementById('profileWork').textContent = sa.work;
                 document.getElementById('profileYear').textContent = 'Year ' + sa.year;
+
+                const todayDate = new Date().toISOString().split('T')[0];
+                if (sa.date === todayDate) {
+                    if (sa.time_out) {
+                        document.getElementById('profileName').innerHTML += 
+                            ' <span class="badge bg-danger">Timed Out</span>';
+                    } else {
+                        document.getElementById('profileName').innerHTML += 
+                            ' <span class="badge bg-success">Timed In</span>';
+                    }
+                }
             }
         } catch (error) {
             console.error('Profile update error:', error);
         }
     }
-    setInterval(updateStudentProfile, 1000);
+
+    setInterval(updateStudentProfile, 1000); 
+
+    async function refreshAttendanceData() {
+        try {
+            const response = await fetch('get_attendance_data.php');
+            const data = await response.json();
+            
+            if (data.success) {
+                const latestLogTbody = document.querySelector('.card:nth-of-type(4) tbody');
+                if (latestLogTbody && data.latestLogs) {
+                    latestLogTbody.innerHTML = data.latestLogs.map(log => `
+                        <tr>
+                            <td>${log.id}</td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <img src="${log.image || 'images/defaultProfile.png'}" 
+                                         alt="Profile" 
+                                         class="rounded-circle me-2" 
+                                         style="width: 30px; height: 30px; object-fit: cover;">
+                                    ${log.first_name} ${log.last_name}
+                                </div>
+                            </td>
+                            <td>${log.date}</td>
+                            <td>${log.time_in}</td>
+                            <td>${log.time_out || '-'}</td>
+                        </tr>
+                    `).join('') || '<tr><td colspan="5" class="text-center">No logs available</td></tr>';
+                }
+
+                const attendanceSheetTbody = document.querySelector('.col-md-9 tbody');
+                if (attendanceSheetTbody && data.attendanceSheet) {
+                    attendanceSheetTbody.innerHTML = data.attendanceSheet.map(sa => `
+                        <tr>
+                            <td>${sa.id}</td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <img src="${sa.image || 'images/defaultProfile.png'}" 
+                                         alt="Profile" 
+                                         class="rounded-circle me-2" 
+                                         style="width: 40px; height: 40px; object-fit: cover;">
+                                    ${sa.last_name}
+                                </div>
+                            </td>
+                            <td>${sa.first_name}</td>
+                            <td>${sa.work}</td>
+                            <td>${sa.year}</td>
+                            <td>${sa.date || '-'}</td>
+                            <td>${sa.day || '-'}</td>
+                            <td>${sa.time_in || '-'}</td>
+                            <td>${sa.time_out || '-'}</td>
+                            <td>${sa.status || 'Pending'}</td>
+                        </tr>
+                    `).join('') || '<tr><td colspan="10">No Record Found</td></tr>';
+                }
+            }
+        } catch (error) {
+            console.error('Error refreshing attendance data:', error);
+        }
+    }
+
+    setInterval(refreshAttendanceData, 1000);
 });
 </script>
 

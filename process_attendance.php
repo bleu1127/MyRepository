@@ -45,8 +45,9 @@ try {
                 ]);
                 exit;
             }
-            $query = "UPDATE attendance SET time_out = NOW() 
-                     WHERE id = ?";
+            $query = "UPDATE attendance 
+                      SET time_out = NOW(), status = 'Completed' 
+                      WHERE id = ?";
             $stmt = mysqli_prepare($con, $query);
             mysqli_stmt_bind_param($stmt, "i", $last_attendance['id']);
             $action = "Time Out";
