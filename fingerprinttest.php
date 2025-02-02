@@ -117,8 +117,6 @@ $result_latest = mysqli_query($con, $query);
                     </form>
                 </div>
             </div>
-
-            <!-- Add this new simulation card -->
             <div class="card mt-3">
                 <div class="card-header text-white" style="background-color: #F16E04;">
                     <h5 class="card-title mb-0">Fingerprint Simulation</h5>
@@ -382,9 +380,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 document.addEventListener('DOMContentLoaded', function() {
     const ESP32_URL = 'http://192.168.254.202';
     let retryTimeout;
-    let isSimulationMode = true; // Add this flag to control simulation mode
+    let isSimulationMode = true;
 
-    // Add simulation form handler
     document.getElementById('simulation-form').addEventListener('submit', async function(e) {
         e.preventDefault();
         const fingerprintId = document.getElementById('simulated-fingerprint-id').value;
@@ -400,7 +397,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function startFingerprintMatching() {
         if (isSimulationMode) {
-            // Don't poll the ESP32 device in simulation mode
             return;
         }
         try {
@@ -558,7 +554,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('profileWork').textContent = sa.work;
                 document.getElementById('profileYear').textContent = 'Year ' + sa.year;
 
-                // Add visual indicator for latest activity
                 const todayDate = new Date().toISOString().split('T')[0];
                 if (sa.date === todayDate) {
                     if (sa.time_out) {
@@ -604,7 +599,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     `).join('') || '<tr><td colspan="5" class="text-center">No logs available</td></tr>';
                 }
 
-                // Update Attendance Sheet table
                 const attendanceSheetTbody = document.querySelector('.col-md-9 tbody');
                 if (attendanceSheetTbody && data.attendanceSheet) {
                     attendanceSheetTbody.innerHTML = data.attendanceSheet.map(sa => `
