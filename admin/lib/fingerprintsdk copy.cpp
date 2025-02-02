@@ -387,54 +387,48 @@ String enrollFingerprint() {
 
 // Modified matchFingerprint function to use fingerFastSearch directly
 String matchFingerprint() {
-    uint8_t p = FINGERPRINT_NOFINGER;
-  
-    // Wait for finger placement (single capture loop)
-    while (true) {
-        p = finger.getImage();
-        switch(p) {
-            case FINGERPRINT_OK:
-                goto captured;
-            case FINGERPRINT_NOFINGER:
-                // Waiting for finger...
-                break;
-            default:
-                Serial.println("Error capturing image");
-                delay(2000);
-                return "{\"status\":\"error\",\"message\":\"Error capturing fingerprint\"}";
+    uint8_t p = finger.getImage();
+    if (p != FINGERPRINT_OK) {
+        if (p == FINGERPRINT_NOFINGER) {
+            Serial.println("Waiting for finger...");
+            return "{\"status\":\"waiting\",\"message\":\"Waiting for finger\"}";
         }
-        delay(100);
+        Serial.println("Error capturing image");
+        return "{\"status\":\"error\",\"message\":\"Error capturing fingerprint\"}";
     }
-captured:
+
     Serial.println("Image captured, converting...");
     p = finger.image2Tz();
     if (p != FINGERPRINT_OK) {
         Serial.println("Conversion failed");
-        delay(2000);
         return "{\"status\":\"error\",\"message\":\"Error converting image\"}";
     }
-  
+
     Serial.println("Searching for match...");
     p = finger.fingerFastSearch();
     if (p == FINGERPRINT_OK) {
+        Serial.println("\n=========================");
         Serial.println("Found fingerprint match!");
         Serial.print("Found ID #"); Serial.println(finger.fingerID);
         Serial.print("Confidence: "); Serial.println(finger.confidence);
-        delay(2000);
-        return "{\"status\":\"success\",\"fingerprintId\":" + String(finger.fingerID) +
-               ",\"confidence\":" + String(finger.confidence) + "}";
-    }
-  
+        Serial.println("=========================\n");
+        
+        String response = "{\"status\":\"success\",\"fingerprintId\":" + String(finger.fingerID) +
+                         ",\"confidence\":" + String(finger.confidence) + "}";
+        return response;
+    } 
+    
     if (p == FINGERPRINT_NOTFOUND) {
         Serial.println("No match found");
-        delay(2000);
         return "{\"status\":\"not_found\",\"message\":\"No matching fingerprint found\"}";
     }
-  
+    
     Serial.println("Unknown error");
-    delay(2000);
     return "{\"status\":\"error\",\"message\":\"Search error\"}";
 }
+
+// Remove or comment out captureAndGetTemplate since we're not using it anymore
+// String captureAndGetTemplate() { ... }
 
 void printSensorDetails() {
   // Get sensor parameters
