@@ -1,10 +1,17 @@
 <?php 
 include('authentication.php');
 include('includes/user-header.php');
+
+$today = date('Y-m-d');
+$query = "SELECT s.id, s.last_name, s.first_name, s.program, s.year, s.work, a.date, a.day, a.time_in, a.time_out, a.status 
+          FROM student_assistant s 
+          INNER JOIN attendance a ON s.id = a.sa_id 
+          WHERE a.date = '$today'";
+$result = mysqli_query($con, $query);
 ?>
 
 <div class="container-fluid px-4">
-     <h4 class="mt-4">Student Assistants</h4>
+     <h4 class="mt-4">Student Assistants Timed In Today</h4>
      <ol class="breadcrumb mb-4">
         <li class="breadcrumb-item active">Attendance</li>
     </ol>
@@ -33,17 +40,27 @@ include('includes/user-header.php');
                             </tr>
                         </thead>
                         <tbody>
-                            <td>6</td>
-                            <td>Esinosa</td>
-                            <td>Val Angelo</td>
-                            <td>BSIT</td>
-                            <td>4</td>
-                            <td>Materials Testing Laboratory</td>
-                            <td>9-17-2024</td>
-                            <td>Tuesday</td>
-                            <td>7:59 am</td>
-                            <td>12:01 pm</td>
-                            <td>Present</td>
+                            <?php if(mysqli_num_rows($result) > 0): ?>
+                                <?php while($row = mysqli_fetch_assoc($result)): ?>
+                                <tr>
+                                    <td><?php echo htmlspecialchars($row['id']); ?></td>
+                                    <td><?php echo htmlspecialchars($row['last_name']); ?></td>
+                                    <td><?php echo htmlspecialchars($row['first_name']); ?></td>
+                                    <td><?php echo htmlspecialchars($row['program']); ?></td>
+                                    <td><?php echo htmlspecialchars($row['year']); ?></td>
+                                    <td><?php echo htmlspecialchars($row['work']); ?></td>
+                                    <td><?php echo htmlspecialchars($row['date']); ?></td>
+                                    <td><?php echo htmlspecialchars($row['day']); ?></td>
+                                    <td><?php echo htmlspecialchars($row['time_in']); ?></td>
+                                    <td><?php echo htmlspecialchars($row['time_out']); ?></td>
+                                    <td><?php echo htmlspecialchars($row['status']); ?></td>
+                                </tr>
+                                <?php endwhile; ?>
+                            <?php else: ?>
+                                <tr>
+                                    <td colspan="11" class="text-center">No student assistants timed in today.</td>
+                                </tr>
+                            <?php endif; ?>
                         </tbody>
                     </table>
                 </div>
@@ -52,8 +69,6 @@ include('includes/user-header.php');
     </div> 
 </div>
 
-
 <?php 
-
 include('includes/scripts.php');
 ?>

@@ -23,30 +23,24 @@ try {
     $result = mysqli_stmt_get_result($stmt);
     
     if ($sa = mysqli_fetch_assoc($result)) {
-        $check_query = "SELECT * FROM attendance WHERE sa_id = ? AND date = CURDATE() ORDER BY time_in DESC LIMIT 1";
+        $check_query = "SELECT * FROM attendance WHERE sa_id = ? ORDER BY date DESC, time_in DESC LIMIT 1";
         $check_stmt = mysqli_prepare($con, $check_query);
         mysqli_stmt_bind_param($check_stmt, "i", $sa['id']);
         mysqli_stmt_execute($check_stmt);
         $check_result = mysqli_stmt_get_result($check_stmt);
         $last_attendance = mysqli_fetch_assoc($check_result);
         
-        if (!$last_attendance) {
+        $current_date = date('Y-m-d');
+        
+        if (!$last_attendance || $last_attendance['date'] != $current_date) {
             $query = "INSERT INTO attendance (sa_id, date, day, time_in, status) 
                      VALUES (?, CURDATE(), DAYNAME(CURDATE()), NOW(), 'Present')";
             $stmt = mysqli_prepare($con, $query);
             mysqli_stmt_bind_param($stmt, "i", $sa['id']);
             $action = "Time In";
         } else if (!$last_attendance['time_out']) {
-            if (empty($data['confirm']) || $data['confirm'] !== true) {
-                echo json_encode([
-                    'success' => false,
-                    'confirmation_required' => true,
-                    'message' => 'Are you sure you want to log out?'
-                ]);
-                exit;
-            }
             $query = "UPDATE attendance SET time_out = NOW() 
-                     WHERE id = ?";
+                     WHERE id = ? AND date = CURDATE()";
             $stmt = mysqli_prepare($con, $query);
             mysqli_stmt_bind_param($stmt, "i", $last_attendance['id']);
             $action = "Time Out";

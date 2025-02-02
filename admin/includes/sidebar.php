@@ -54,9 +54,9 @@
 
                         <div class="collapse" id="pagesCollapseAuth" aria-labelledby="headingOne" data-bs-parent="#sidenavAccordionPages">
                             <nav class="sb-sidenav-menu-nested nav">
-                                <a class="nav-link" href="work_offices.php">Offices</a>
-                                <a class="nav-link" href="work_laboratories.php">Laboratories</a>
-                                <a class="nav-link" href="work_manpower_services.php">Manpower Services</a>
+                                <a class="nav-link" href="tito_offices.php">Offices</a>
+                                <a class="nav-link" href="tito_lab.php">Laboratory</a>
+                                <a class="nav-link" href="tito_manpower.php">Manpower Services</a>
                             </nav>
                         </div>
 

@@ -22,7 +22,7 @@ include('includes/header.php');
                     <table id="myTable" class="table table-bordered">
                         <thead>
                             <tr>
-                                <th>ID</th>
+                                <th>ID</th>z
                                 <th>Last Name</th>
                                 <th>First Name</th>
                                 <th>Program</th>
